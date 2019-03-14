@@ -8,6 +8,10 @@ public class Client {
         return (receivedData[0] == 1);
     }
 
+    private static boolean isACK(byte[] receivedData){
+        return (receivedData[0] == 3);
+    }
+
     private static void analisaSegmento(byte[] receivedData){
         if(receivedData[0]==1) {
             System.out.println("got a syn");
@@ -55,6 +59,7 @@ public class Client {
         sendData = buildSYN();
         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
         clientSocket.send(sendPacket);
+        System.out.println("Enviei SYN inicial");
 
         // Espera resposta SYN
         DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
@@ -66,23 +71,42 @@ public class Client {
             sendData = buildACK();
             sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
             clientSocket.send(sendPacket);
+            System.out.println("Enviei ACK ao SYN");
+
+
         }
 
         // Espera por um sinal para começar a falar
         receivePacket = new DatagramPacket(receiveData, receiveData.length);
         clientSocket.receive(receivePacket);
+        String modifiedSentence = new String(receivePacket.getData());
+        System.out.println("FROM SERVER:" + modifiedSentence);
 
         while(true) {
 
             String sentence = inFromUser.readLine();
+
+            if(sentence.equals("end")) break;
+
             sendData = sentence.getBytes();
             sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
             clientSocket.send(sendPacket);
 
             receivePacket = new DatagramPacket(receiveData, receiveData.length);
             clientSocket.receive(receivePacket);
-            String modifiedSentence = new String(receivePacket.getData());
+            modifiedSentence = new String(receivePacket.getData());
             System.out.println("FROM SERVER:" + modifiedSentence);
         }
+
+        sendData = buildFYN();
+        sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
+        clientSocket.send(sendPacket);
+
+        receivePacket = new DatagramPacket(receiveData, receiveData.length);
+        clientSocket.receive(receivePacket);
+        analisaSegmento(receivePacket.getData());
+        if(isACK(receivePacket.getData()))
+            System.out.println("a terminar");
+
     }
 }

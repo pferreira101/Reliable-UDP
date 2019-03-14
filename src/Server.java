@@ -11,6 +11,10 @@ public class Server {
         return (receivedData[0] == 3);
     }
 
+    private static boolean isFYN(byte[] receivedData){
+        return (receivedData[0] == 2);
+    }
+
     private static void analisaSegmento(byte[] receivedData){
         if(receivedData[0]==1) {
             System.out.println("got a syn");
@@ -47,7 +51,7 @@ public class Server {
     {
         System.out.print("a correr");
         InetAddress svAddress = InetAddress.getByAddress(new byte[] {
-                (byte)192, (byte)168, (byte)42, (byte)121});
+                (byte)192, (byte)168, (byte)43, (byte)121});
         DatagramSocket serverSocket = new DatagramSocket(9876,svAddress);
         byte[] receiveData = new byte[1024];
         byte[] sendData;
@@ -64,21 +68,28 @@ public class Server {
             sendData = buildSYN();
             sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
             serverSocket.send(sendPacket);
+            System.out.println("enviei syn de confirmacao");
         }
 
         receivePacket = new DatagramPacket(receiveData, receiveData.length);
         serverSocket.receive(receivePacket);
+        analisaSegmento(receivePacket.getData());
 
         if(isACK(receivePacket.getData())){
             String confirm = new String("ola");
             sendData = confirm.getBytes();
             sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
             serverSocket.send(sendPacket);
+            System.out.println("enviei mensagem inicial");
         }
 
         while(true){
             receivePacket = new DatagramPacket(receiveData, receiveData.length);
             serverSocket.receive(receivePacket);
+            analisaSegmento(receivePacket.getData());
+
+            if(isFYN(receivePacket.getData())) break;
+
             String sentence = new String(receivePacket.getData());
             String capitalizedSentence = sentence.toUpperCase();
             sendData = capitalizedSentence.getBytes();
@@ -86,6 +97,12 @@ public class Server {
                     new DatagramPacket(sendData, sendData.length, IPAddress, port);
             serverSocket.send(sendPacket);
         }
+
+        sendData = buildACK();
+        sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+        serverSocket.send(sendPacket);
+
+        System.out.println("A terminar");
 
     }
 }
