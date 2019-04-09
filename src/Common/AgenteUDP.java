@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class AgenteUDP {
 
@@ -13,7 +14,8 @@ public class AgenteUDP {
         - Passar logo file em vez do path?
         - Retornar uma lista de Packets já montados?
      */
-    public void dividePacket(String path, int max) throws IOException {
+
+    public static List<byte[]> dividePacket(String path, int max) throws IOException {
         File file = new File(path);
 
         byte[] content = Files.readAllBytes(file.toPath());
@@ -31,5 +33,6 @@ public class AgenteUDP {
 
         fragmentos.add(Arrays.copyOfRange(content,frag*max-1, content.length-1));
 
+        return fragmentos;
     }
 }

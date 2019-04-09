@@ -14,9 +14,10 @@ public class Client {
     public static void main(String args[]) throws Exception {
         BufferedReader inFromUser =
                 new BufferedReader(new InputStreamReader(System.in));
+        FileOutputStream fos = new FileOutputStream("abc.txt");
         DatagramSocket clientSocket = new DatagramSocket();
         InetAddress IPAddress = InetAddress.getByAddress(new byte[] {
-                (byte)192, (byte)168, (byte)42, (byte)121});
+                (byte)127, (byte)0, (byte)0, (byte)1});
 
 
         byte[] sendData;
@@ -52,20 +53,32 @@ public class Client {
 
         while(true) {
 
-            String sentence = inFromUser.readLine();
+            //String sentence = inFromUser.readLine();
 
-            if(sentence.equals("end")) break;
+            //if(sentence.equals("end")) break;
 
-            sendData = sentence.getBytes();
-            sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
-            clientSocket.send(sendPacket);
+            //sendData = sentence.getBytes();
+            //sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
+            //clientSocket.send(sendPacket);
+
+            //receivePacket = new DatagramPacket(receiveData, receiveData.length);
+            //lientSocket.receive(receivePacket);
+            //modifiedSentence = new String(receivePacket.getData());
+            //System.out.println("FROM SERVER:" + modifiedSentence);
+            /************************************************************/
 
             receivePacket = new DatagramPacket(receiveData, receiveData.length);
+            if(isFYN(receivePacket.getData())) break;
+
             clientSocket.receive(receivePacket);
-            modifiedSentence = new String(receivePacket.getData());
-            System.out.println("FROM SERVER:" + modifiedSentence);
+            byte[] data = receivePacket.getData();
+            fos.write(data);
+
+
         }
 
+        fos.flush();
+        fos.close();
         sendData = buildFYN();
         sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
         clientSocket.send(sendPacket);
