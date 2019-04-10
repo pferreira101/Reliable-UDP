@@ -3,7 +3,7 @@ package Common;
 import java.io.*;
 
 
-public class MySegment {
+public class MySegment implements Serializable {
     public int seq_number;
     public int ack_number;
     public byte flag;

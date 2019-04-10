@@ -15,15 +15,9 @@ public class Client {
 
 
     public void connect(InetAddress IPAddress, int porta) throws Exception {
-        BufferedReader inFromUser =
-                new BufferedReader(new InputStreamReader(System.in));
         DatagramSocket clientSocket = new DatagramSocket();
-        InetAddress IPAddress2 = InetAddress.getByAddress(new byte[] {
-                (byte)127, (byte)0, (byte)0, (byte)1});
-
-
         byte[] sendData;
-        byte[] receiveData = new byte[1024];
+        byte[] receiveData = new byte[4096];
         MySegment to_send;
         MySegment received;
         DatagramPacket sendPacket;
@@ -44,7 +38,7 @@ public class Client {
         received = MySegment.fromByteArray(receivePacket.getData());
 
         // Envia ACK
-        if(isACK(received)){ // DEVIA ESTAR A ESPERA DE UM SYNACK
+        if(isSYN(received)){ // DEVIA ESTAR A ESPERA DE UM SYNACK
             to_send = new MySegment();
             buildACK(to_send);
             sendData = to_send.toByteArray();
@@ -55,7 +49,7 @@ public class Client {
 
         //TRANSFERENCIA DE FICHEIRO
         int count=0;
-        FileOutputStream fos = new FileOutputStream("output.txt");
+        FileOutputStream fos = new FileOutputStream("output.png");
         BufferedOutputStream bos = new BufferedOutputStream(fos);
 
         while(true) {

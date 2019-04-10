@@ -25,11 +25,11 @@ public class AgenteUDP {
 
         ArrayList<byte[]> fragmentos = new ArrayList<>();
         for(int i = 0; i<frag; i++) {
-            fragmentos.add(Arrays.copyOfRange(content, i * max, i * max + max - 1));
+            fragmentos.add(Arrays.copyOfRange(content, i * max, i * max + max ));
             to_consume -= max;
         }
         //add last frag
-        if(to_consume > 0) fragmentos.add(Arrays.copyOfRange(content,frag*max, content.length-1));
+        if(to_consume > 0) fragmentos.add(Arrays.copyOfRange(content,frag*max, content.length));
 
         return fragmentos;
     }

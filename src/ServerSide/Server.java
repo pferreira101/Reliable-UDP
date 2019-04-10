@@ -64,13 +64,15 @@ public class Server extends Thread{
                 if(isACK(received)) {
                     System.out.println("Recebi um ACK - "+ LocalTime.now());
                     //TRANSFERENCIA DE FICHEIRO
-                    List<byte[]> teste = dividePacket("connect.txt", 1024);
+                    List<byte[]> teste = dividePacket("teste.png", 1024);
                     System.out.println("TAMANHO = " + teste.size());
 
                     for (byte[] b : teste) {
                         to_send = new MySegment();
                         to_send.setFileData(b);
+                        System.out.println(b);
                         sendData = to_send.toByteArray();
+                        System.out.println("tamanho do sendData: " + sendData.length);
                         sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
                         serverSocket.send(sendPacket);
 

@@ -28,17 +28,15 @@ public class TransfereCC {
             switch(inputs[0]){
                 case "connect":
                     if(inputs.length == 3){
-                        try{
+
                             System.out.println(InetAddress.getByName(inputs[1]).toString());
                             System.out.println("Válido");
 
                             Client c = new Client();
                             int porta = Integer.parseInt(inputs[2]);
                             c.connect(InetAddress.getByName(inputs[1]), porta);
-                        }
-                        catch (Exception e){
-                            System.out.println("Inválido");
-                        }
+
+
                     }
                     else{
                         System.out.println("Inserir um IP.");
