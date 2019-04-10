@@ -1,5 +1,7 @@
 package ClientSide;
 
+import Common.MySegment;
+
 import java.io.*;
 import java.net.*;
 import java.time.LocalTime;
@@ -22,22 +24,30 @@ public class Client {
 
         byte[] sendData;
         byte[] receiveData = new byte[1024];
+        MySegment to_send;
+        MySegment received;
+        DatagramPacket sendPacket;
 
 
 
         //INICIO DE CONEXAO
-        sendData = buildSYN();
-        DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
+        to_send = new MySegment();
+        buildSYN(to_send);
+        sendData = to_send.toByteArray();
+        sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
         System.out.println("Enviei SYN inicial - "+ LocalTime.now());
         clientSocket.send(sendPacket);
 
         // Espera resposta SYN
         DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
         clientSocket.receive(receivePacket);
+        received = MySegment.fromByteArray(receivePacket.getData());
 
         // Envia ACK
-        if(isACK(receivePacket.getData())){ // DEVIA ESTAR A ESPERA DE UM SYNACK
-            sendData = buildACK();
+        if(isACK(received)){ // DEVIA ESTAR A ESPERA DE UM SYNACK
+            to_send = new MySegment();
+            buildACK(to_send);
+            sendData = to_send.toByteArray();
             sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
             System.out.println("Enviei ACK ao SYNACK - "+ LocalTime.now());
             clientSocket.send(sendPacket);
@@ -51,29 +61,32 @@ public class Client {
         while(true) {
             receivePacket = new DatagramPacket(receiveData, receiveData.length);
             clientSocket.receive(receivePacket);
+            received = MySegment.fromByteArray(receivePacket.getData());
 
-            if(isFYN(receivePacket.getData())){ System.out.println("Recebi FYN - "+ LocalTime.now()); break;}
+            if(isFYN(received)){ System.out.println("Recebi FYN - "+ LocalTime.now()); break;}
 
             System.out.printf("Recebi o %d fragmento -" + LocalTime.now() +"\n" ,++count);
             byte[] data = receivePacket.getData();
-            bos.write(data, 0,data.length);
+            received = MySegment.fromByteArray(receivePacket.getData());
+            bos.write(received.fileData, 0,received.fileData.length);
             System.out.println("TAMANHO RECEBIDO: " + data.length);
 
-            sendData = buildACK();
-            System.out.println("Enviei ACK ao Segmento "+count  );
+            to_send = new MySegment();
+            buildACK(to_send);
+            sendData = to_send.toByteArray();
             sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
+            System.out.println("Enviei ACK ao Segmento "+count  );
             clientSocket.send(sendPacket);
         }
         bos.flush();
 
         //TERMINO DE CONEXAO
-        sendData = buildACK();
+        to_send = new MySegment();
+        buildACK(to_send);
+        sendData = to_send.toByteArray();
         sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
         System.out.println("Enviei ACK ao FYN");
         clientSocket.send(sendPacket);
-
-
-
 
     }
 }

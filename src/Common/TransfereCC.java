@@ -12,6 +12,7 @@ public class TransfereCC {
 
     public static void main(String args[]) throws Exception {
         System.out.println("--- Welcome to TransfereCC ---");
+        System.out.println(InetAddress.getLocalHost().getHostAddress());
 
         Thread server = new Thread(new Server(InetAddress.getLocalHost()));
         server.start();

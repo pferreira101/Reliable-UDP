@@ -5,9 +5,11 @@ import java.net.*;
 import java.time.LocalTime;
 import java.util.List;
 import Common.AgenteUDP;
+import Common.MySegment;
 
 import static Common.AgenteUDP.dividePacket;
 import static Common.ConnectionControl.*;
+
 
 public class Server extends Thread{
     private InetAddress svAddress;
@@ -30,17 +32,25 @@ public class Server extends Thread{
                 byte[] sendData;
 
                 DatagramPacket sendPacket;
+                MySegment to_send;
+                MySegment received;
 
                 System.out.println("ESPERAR PRIMEIRO PACOTE");
                 DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
                 serverSocket.receive(receivePacket);
+                received = MySegment.fromByteArray(receivePacket.getData());
                 System.out.println("RECEBEU PRIMEIRO PACOTE");
+
+                //####### meter na tabela de estado
                 InetAddress IPAddress = receivePacket.getAddress();
                 int port = receivePacket.getPort();
+                //#######
 
                 // INICIO DE CONEXAO
-                if(isSYN(receivePacket.getData())){
-                    sendData = buildACK(); //seria SYNACK
+                if(isSYN(received)){
+                    to_send = new MySegment(); //seria SYNACK
+                    buildSYN(to_send);
+                    sendData = to_send.toByteArray();
                     sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
                     System.out.println("Enviei synack - "+ LocalTime.now());
                     serverSocket.send(sendPacket);
@@ -48,16 +58,20 @@ public class Server extends Thread{
 
                 receivePacket = new DatagramPacket(receiveData, receiveData.length);
                 serverSocket.receive(receivePacket);
+                received = MySegment.fromByteArray(receivePacket.getData());
 
 
-                if(isACK(receivePacket.getData())) {
+                if(isACK(received)) {
                     System.out.println("Recebi um ACK - "+ LocalTime.now());
                     //TRANSFERENCIA DE FICHEIRO
                     List<byte[]> teste = dividePacket("connect.txt", 1024);
                     System.out.println("TAMANHO = " + teste.size());
 
                     for (byte[] b : teste) {
-                        sendPacket = new DatagramPacket(b, b.length, IPAddress, port);
+                        to_send = new MySegment();
+                        to_send.setFileData(b);
+                        sendData = to_send.toByteArray();
+                        sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
                         serverSocket.send(sendPacket);
 
                         receivePacket = new DatagramPacket(receiveData, receiveData.length);
@@ -67,14 +81,19 @@ public class Server extends Thread{
 
                 }
                 //TERMINO DE CONEXAO
-                sendData = buildFYN();
+                to_send = new MySegment();
+                buildFYN(to_send);
+                sendData = to_send.toByteArray();
                 sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
                 System.out.println("Enviei FYN - "+ LocalTime.now());
                 serverSocket.send(sendPacket);
 
+
                 receivePacket = new DatagramPacket(receiveData, receiveData.length);
                 serverSocket.receive(receivePacket);
-                if(isACK(receivePacket.getData()))
+                received = MySegment.fromByteArray(receivePacket.getData());
+
+                if(isACK(received))
                     System.out.println("A terminar - "+ LocalTime.now());
             }
             catch (Exception e) {
