@@ -12,11 +12,11 @@ public class Client {
 
 
 
-    public static void main(String args[]) throws Exception {
+    public void connect(InetAddress IPAddress, int porta) throws Exception {
         BufferedReader inFromUser =
                 new BufferedReader(new InputStreamReader(System.in));
         DatagramSocket clientSocket = new DatagramSocket();
-        InetAddress IPAddress = InetAddress.getByAddress(new byte[] {
+        InetAddress IPAddress2 = InetAddress.getByAddress(new byte[] {
                 (byte)127, (byte)0, (byte)0, (byte)1});
 
 
@@ -27,7 +27,7 @@ public class Client {
 
         //INICIO DE CONEXAO
         sendData = buildSYN();
-        DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
+        DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
         System.out.println("Enviei SYN inicial - "+ LocalTime.now());
         clientSocket.send(sendPacket);
 
@@ -38,15 +38,16 @@ public class Client {
         // Envia ACK
         if(isACK(receivePacket.getData())){ // DEVIA ESTAR A ESPERA DE UM SYNACK
             sendData = buildACK();
-            sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
+            sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
             System.out.println("Enviei ACK ao SYNACK - "+ LocalTime.now());
             clientSocket.send(sendPacket);
         }
 
         //TRANSFERENCIA DE FICHEIRO
         int count=0;
-        FileOutputStream fos = new FileOutputStream("received.png");
+        FileOutputStream fos = new FileOutputStream("output.txt");
         BufferedOutputStream bos = new BufferedOutputStream(fos);
+
         while(true) {
             receivePacket = new DatagramPacket(receiveData, receiveData.length);
             clientSocket.receive(receivePacket);
@@ -56,17 +57,18 @@ public class Client {
             System.out.printf("Recebi o %d fragmento -" + LocalTime.now() +"\n" ,++count);
             byte[] data = receivePacket.getData();
             bos.write(data, 0,data.length);
+            System.out.println("TAMANHO RECEBIDO: " + data.length);
 
             sendData = buildACK();
             System.out.println("Enviei ACK ao Segmento "+count  );
-            sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
+            sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
             clientSocket.send(sendPacket);
         }
         bos.flush();
 
         //TERMINO DE CONEXAO
         sendData = buildACK();
-        sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
+        sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
         System.out.println("Enviei ACK ao FYN");
         clientSocket.send(sendPacket);
 

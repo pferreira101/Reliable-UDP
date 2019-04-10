@@ -1,26 +1,60 @@
 package Common;
 
+import ClientSide.Client;
+import ServerSide.Server;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class TransfereCC {
 
 
-    public static void main(String args[]) throws UnknownHostException {
-        if(args.length == 1){
-            try{
-                System.out.println(InetAddress.getByName(args[0]).toString());
-                System.out.println("Válido\n");
-            }
-            catch (Exception e){
-                System.out.println("Inválido\n");
+    public static void main(String args[]) throws Exception {
+        System.out.println("--- Welcome to TransfereCC ---");
+
+        Thread server = new Thread(new Server(InetAddress.getLocalHost()));
+        server.start();
+        System.out.println("Server started");
+
+        BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
+
+        while(true){
+            String input = buffer.readLine();
+
+            String inputs[] = input.split(" ");
+
+            switch(inputs[0]){
+                case "connect":
+                    if(inputs.length == 3){
+                        try{
+                            System.out.println(InetAddress.getByName(inputs[1]).toString());
+                            System.out.println("Válido");
+
+                            Client c = new Client();
+                            int porta = Integer.parseInt(inputs[2]);
+                            c.connect(InetAddress.getByName(inputs[1]), porta);
+                        }
+                        catch (Exception e){
+                            System.out.println("Inválido");
+                        }
+                    }
+                    else{
+                        System.out.println("Inserir um IP.");
+                    }
+                    break;
+
+                case "close":
+                    System.out.println("--- TransfereCC closed ---");
+                    return;
+
+                default:
+                    System.out.println("Introduza um comando válido");
+                    break;
             }
         }
-        else{
-            System.out.println("Introduza um IP \n");
-        }
+
+
+
     }
 }
