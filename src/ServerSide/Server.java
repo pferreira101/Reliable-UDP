@@ -2,6 +2,7 @@ package ServerSide;
 
 import java.io.*;
 import java.net.*;
+import java.time.LocalTime;
 import java.util.List;
 import Common.AgenteUDP;
 
@@ -15,7 +16,6 @@ public class Server {
 
     public static void main(String args[]) throws Exception
     {
-        System.out.print("a correr");
         InetAddress svAddress = InetAddress.getByAddress(new byte[] {
                 (byte)127, (byte)0, (byte)0, (byte)1});
         DatagramSocket serverSocket = new DatagramSocket(9876,svAddress);
@@ -23,61 +23,51 @@ public class Server {
         byte[] sendData;
 
         DatagramPacket sendPacket;
+
         DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
         serverSocket.receive(receivePacket);
-        analisaSegmento(receivePacket.getData());
 
         InetAddress IPAddress = receivePacket.getAddress();
         int port = receivePacket.getPort();
 
+        //INICIO DE CONEXAO
         if(isSYN(receivePacket.getData())){
-            sendData = buildSYN();
+            sendData = buildACK(); //seria SYNACK
             sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+            System.out.println("Enviei synack - "+ LocalTime.now());
             serverSocket.send(sendPacket);
-            System.out.println("enviei syn de confirmacao");
         }
 
         receivePacket = new DatagramPacket(receiveData, receiveData.length);
         serverSocket.receive(receivePacket);
-        analisaSegmento(receivePacket.getData());
 
-        if(isACK(receivePacket.getData())){
-            String confirm = new String("ola");
-            sendData = confirm.getBytes();
-            sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-            serverSocket.send(sendPacket);
-            System.out.println("enviei mensagem inicial");
-        }
 
-        while(true){
-            receivePacket = new DatagramPacket(receiveData, receiveData.length);
-            //serverSocket.receive(receivePacket);
-            //analisaSegmento(receivePacket.getData());
-
-            if(isFYN(receivePacket.getData())) break;
-
-            List<byte[]> teste = dividePacket("teste.txt", 10);
+        if(isACK(receivePacket.getData())) {
+            System.out.println("Recebi um ACK - "+ LocalTime.now());
+            //TRANSFERENCIA DE FICHEIRO
+            List<byte[]> teste = dividePacket("testepng.png", 1024);
             System.out.println("TAMANHO = " + teste.size());
-            for(byte[] b : teste){
+
+            for (byte[] b : teste) {
                 sendPacket = new DatagramPacket(b, b.length, IPAddress, port);
                 serverSocket.send(sendPacket);
+
+                receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                serverSocket.receive(receivePacket);
+                System.out.println("Recebi um ACK ao pacote enviado - "+ LocalTime.now());
             }
-            /*
-            String sentence = new String(receivePacket.getData());
-            String capitalizedSentence = sentence.toUpperCase();
-            sendData = capitalizedSentence.getBytes();
-            */
-            sendData = buildFYN();
-            sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-            serverSocket.send(sendPacket);
 
         }
-
-        sendData = buildACK();
+        //TERMINO DE CONEXAO
+        sendData = buildFYN();
         sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+        System.out.println("Enviei FYN - "+ LocalTime.now());
         serverSocket.send(sendPacket);
 
-        System.out.println("A terminar");
+        receivePacket = new DatagramPacket(receiveData, receiveData.length);
+        serverSocket.receive(receivePacket);
+        if(isACK(receivePacket.getData()))
+         System.out.println("A terminar - "+ LocalTime.now());
 
     }
 }

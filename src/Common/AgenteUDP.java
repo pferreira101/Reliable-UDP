@@ -20,18 +20,16 @@ public class AgenteUDP {
 
         byte[] content = Files.readAllBytes(file.toPath());
 
-        int frag = content.length/max;
-        System.out.println("Frags = " + frag);
+        int to_consume= content.length;
+        int frag = content.length/max ;
 
         ArrayList<byte[]> fragmentos = new ArrayList<>();
-        for(int i = 0; i<frag; i++){
-
-            fragmentos.add(Arrays.copyOfRange(content,i*max, i*max+max-1));
-
-            System.out.println("Fragmento " + i + " completo.");
+        for(int i = 0; i<frag; i++) {
+            fragmentos.add(Arrays.copyOfRange(content, i * max, i * max + max - 1));
+            to_consume -= max;
         }
-
-        fragmentos.add(Arrays.copyOfRange(content,frag*max-1, content.length-1));
+        //add last frag
+        if(to_consume > 0) fragmentos.add(Arrays.copyOfRange(content,frag*max, content.length-1));
 
         return fragmentos;
     }
