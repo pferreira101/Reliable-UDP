@@ -3,6 +3,7 @@ package ServerSide;
 import java.io.*;
 import java.net.*;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import Common.AgenteUDP;
 import Common.MySegment;
@@ -13,16 +14,18 @@ import static Common.ConnectionControl.*;
 
 public class Server extends Thread{
     private InetAddress svAddress;
+    private int porta;
 
-    public Server(InetAddress ip){
+    public Server(InetAddress ip, int p){
         svAddress = ip;
+        porta = p;
     }
 
     public void run() {
         DatagramSocket serverSocket = null;
         try{
 
-            serverSocket = new DatagramSocket(9875,svAddress);
+            serverSocket = new DatagramSocket(porta, svAddress);
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -59,8 +62,14 @@ public class Server extends Thread{
                 if(isACK(received)) {
                     System.out.println("Recebi um ACK - "+ LocalTime.now());
                     //TRANSFERENCIA DE FICHEIRO
-                    List<byte[]> teste = dividePacket("teste.png", 1024);
-                    System.out.println("TAMANHO = " + teste.size());
+                    String filename = new String(received.fileData);
+                    List<byte[]> teste = new ArrayList<>();
+                    try {
+                        teste = dividePacket(filename, 1024);
+                    }
+                    catch (IOException e){
+                        System.out.println("Ficheiro Inexistente"); // AVISAR CLIENTE QUE FICHEIRO NÃO EXISTE
+                    }
 
                     for (byte[] b : teste) {
                         to_send = new MySegment();

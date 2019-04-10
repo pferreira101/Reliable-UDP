@@ -15,7 +15,7 @@ public class Client {
 
 
 
-    public void connect(InetAddress IPAddress, int porta) throws Exception {
+    public void connect(InetAddress ip, String filename, int porta) throws Exception {
         DatagramSocket clientSocket = new DatagramSocket();
         byte[] sendData;
         byte[] receiveData = new byte[4096];
@@ -28,7 +28,7 @@ public class Client {
         //INICIO DE CONEXAO
         to_send = new MySegment();
         buildSYN(to_send);
-        AgenteUDP.sendPacket(clientSocket, IPAddress, porta, to_send);
+        AgenteUDP.sendPacket(clientSocket, ip, porta, to_send);
 
         // Espera resposta SYN
         received = AgenteUDP.receivePacket(clientSocket);
@@ -36,13 +36,14 @@ public class Client {
         // Envia ACK
         if(isSYN(received)){ // DEVIA ESTAR A ESPERA DE UM SYNACK
             to_send = new MySegment();
-            buildACK(to_send);
-            AgenteUDP.sendPacket(clientSocket, IPAddress, porta, to_send);
+            buildACKWithFilename(to_send, filename);
+            AgenteUDP.sendPacket(clientSocket, ip, porta, to_send);
         }
 
         //TRANSFERENCIA DE FICHEIRO
-        int count=0;
-        FileOutputStream fos = new FileOutputStream("output.png");
+        int count = 0;
+        new File("downloads/").mkdirs();
+        FileOutputStream fos = new FileOutputStream("downloads/" + filename);
         BufferedOutputStream bos = new BufferedOutputStream(fos);
 
         while(true) {
@@ -56,14 +57,15 @@ public class Client {
 
             to_send = new MySegment();
             buildACK(to_send);
-            AgenteUDP.sendPacket(clientSocket, IPAddress, porta, to_send);
+            AgenteUDP.sendPacket(clientSocket, ip, porta, to_send);
         }
         bos.flush();
+        bos.close();
 
         //TERMINO DE CONEXAO
         to_send = new MySegment();
         buildACK(to_send);
-        AgenteUDP.sendPacket(clientSocket, IPAddress, porta, to_send);
+        AgenteUDP.sendPacket(clientSocket, ip, porta, to_send);
 
     }
 }
