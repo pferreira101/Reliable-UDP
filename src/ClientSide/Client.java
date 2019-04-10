@@ -1,5 +1,6 @@
 package ClientSide;
 
+import Common.AgenteUDP;
 import Common.MySegment;
 
 import java.io.*;
@@ -27,24 +28,16 @@ public class Client {
         //INICIO DE CONEXAO
         to_send = new MySegment();
         buildSYN(to_send);
-        sendData = to_send.toByteArray();
-        sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
-        System.out.println("Enviei SYN inicial - "+ LocalTime.now());
-        clientSocket.send(sendPacket);
+        AgenteUDP.sendPacket(clientSocket, IPAddress, porta, to_send);
 
         // Espera resposta SYN
-        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-        clientSocket.receive(receivePacket);
-        received = MySegment.fromByteArray(receivePacket.getData());
+        received = AgenteUDP.receivePacket(clientSocket);
 
         // Envia ACK
         if(isSYN(received)){ // DEVIA ESTAR A ESPERA DE UM SYNACK
             to_send = new MySegment();
             buildACK(to_send);
-            sendData = to_send.toByteArray();
-            sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
-            System.out.println("Enviei ACK ao SYNACK - "+ LocalTime.now());
-            clientSocket.send(sendPacket);
+            AgenteUDP.sendPacket(clientSocket, IPAddress, porta, to_send);
         }
 
         //TRANSFERENCIA DE FICHEIRO
@@ -53,34 +46,24 @@ public class Client {
         BufferedOutputStream bos = new BufferedOutputStream(fos);
 
         while(true) {
-            receivePacket = new DatagramPacket(receiveData, receiveData.length);
-            clientSocket.receive(receivePacket);
-            received = MySegment.fromByteArray(receivePacket.getData());
+            received = AgenteUDP.receivePacket(clientSocket);
 
             if(isFYN(received)){ System.out.println("Recebi FYN - "+ LocalTime.now()); break;}
 
             System.out.printf("Recebi o %d fragmento -" + LocalTime.now() +"\n" ,++count);
-            byte[] data = receivePacket.getData();
-            received = MySegment.fromByteArray(receivePacket.getData());
             bos.write(received.fileData, 0,received.fileData.length);
-            System.out.println("TAMANHO RECEBIDO: " + data.length);
+
 
             to_send = new MySegment();
             buildACK(to_send);
-            sendData = to_send.toByteArray();
-            sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
-            System.out.println("Enviei ACK ao Segmento "+count  );
-            clientSocket.send(sendPacket);
+            AgenteUDP.sendPacket(clientSocket, IPAddress, porta, to_send);
         }
         bos.flush();
 
         //TERMINO DE CONEXAO
         to_send = new MySegment();
         buildACK(to_send);
-        sendData = to_send.toByteArray();
-        sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, porta);
-        System.out.println("Enviei ACK ao FYN");
-        clientSocket.send(sendPacket);
+        AgenteUDP.sendPacket(clientSocket, IPAddress, porta, to_send);
 
     }
 }

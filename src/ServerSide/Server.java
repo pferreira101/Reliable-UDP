@@ -22,7 +22,7 @@ public class Server extends Thread{
         DatagramSocket serverSocket = null;
         try{
 
-            serverSocket = new DatagramSocket(9876,svAddress);
+            serverSocket = new DatagramSocket(9875,svAddress);
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -50,15 +50,10 @@ public class Server extends Thread{
                 if(isSYN(received)){
                     to_send = new MySegment(); //seria SYNACK
                     buildSYN(to_send);
-                    sendData = to_send.toByteArray();
-                    sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-                    System.out.println("Enviei synack - "+ LocalTime.now());
-                    serverSocket.send(sendPacket);
+                    AgenteUDP.sendPacket(serverSocket, IPAddress, port, to_send);
                 }
 
-                receivePacket = new DatagramPacket(receiveData, receiveData.length);
-                serverSocket.receive(receivePacket);
-                received = MySegment.fromByteArray(receivePacket.getData());
+                received = AgenteUDP.receivePacket(serverSocket);
 
 
                 if(isACK(received)) {
@@ -70,14 +65,9 @@ public class Server extends Thread{
                     for (byte[] b : teste) {
                         to_send = new MySegment();
                         to_send.setFileData(b);
-                        System.out.println(b);
-                        sendData = to_send.toByteArray();
-                        System.out.println("tamanho do sendData: " + sendData.length);
-                        sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-                        serverSocket.send(sendPacket);
+                        AgenteUDP.sendPacket(serverSocket, IPAddress, port, to_send);
 
-                        receivePacket = new DatagramPacket(receiveData, receiveData.length);
-                        serverSocket.receive(receivePacket);
+                        received = AgenteUDP.receivePacket(serverSocket);
                         System.out.println("Recebi um ACK ao pacote enviado - "+ LocalTime.now());
                     }
 
@@ -85,15 +75,10 @@ public class Server extends Thread{
                 //TERMINO DE CONEXAO
                 to_send = new MySegment();
                 buildFYN(to_send);
-                sendData = to_send.toByteArray();
-                sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-                System.out.println("Enviei FYN - "+ LocalTime.now());
-                serverSocket.send(sendPacket);
+                AgenteUDP.sendPacket(serverSocket, IPAddress, port, to_send);
 
 
-                receivePacket = new DatagramPacket(receiveData, receiveData.length);
-                serverSocket.receive(receivePacket);
-                received = MySegment.fromByteArray(receivePacket.getData());
+                received = AgenteUDP.receivePacket(serverSocket);
 
                 if(isACK(received))
                     System.out.println("A terminar - "+ LocalTime.now());

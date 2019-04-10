@@ -1,19 +1,54 @@
 package Common;
 
+import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.nio.file.Files;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static Common.ConnectionControl.buildACK;
+
 public class AgenteUDP {
 
 
-    /*
-        - Passar logo file em vez do path?
-        - Retornar uma lista de Packets já montados?
-     */
+    public static  void sendPacket(DatagramSocket datagramSocket, InetAddress IPAddress, int porta, MySegment to_send){
+        DatagramPacket sendPacket;
+        try {
+            byte[] data = to_send.toByteArray();
+            sendPacket = new DatagramPacket(data, data.length, IPAddress, porta);
+            datagramSocket.send(sendPacket);
+        }
+        catch(Exception e){
+            System.out.println("Error sending packet");
+        }
+    }
+
+    public static MySegment receivePacket(DatagramSocket datagramSocket){
+        MySegment to_return=null;
+        byte[] receiveData = new byte[4096];
+        byte[] sendData;
+        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+        try{
+            datagramSocket.receive(receivePacket);
+            to_return = MySegment.fromByteArray(receivePacket.getData());
+        }
+        catch(IOException e){
+            System.out.println("Error ocurred during receive method");
+        }
+        catch(ClassNotFoundException e){
+            System.out.println("Can't convert to MySegment");
+        }
+        finally {
+            return to_return;
+        }
+
+    }
 
     public static List<byte[]> dividePacket(String path, int max) throws IOException {
         File file = new File(path);
