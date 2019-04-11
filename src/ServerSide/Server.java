@@ -5,6 +5,8 @@ import java.net.*;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import ClientSide.ClientErrorControl;
 import Common.AgenteUDP;
 import Common.MySegment;
 
@@ -14,25 +16,26 @@ import static Common.ConnectionControl.*;
 
 public class Server extends Thread{
     private InetAddress svAddress;
-    private int porta;
+    private int port;
 
-    public Server(InetAddress ip, int p){
+    public Server(InetAddress ip, int port_number){
         svAddress = ip;
-        porta = p;
+        port = port_number;
     }
 
     public void run() {
         DatagramSocket serverSocket = null;
-        try{
+        byte[] receiveData = new byte[1024];
+        byte[] sendData;
 
-            serverSocket = new DatagramSocket(porta, svAddress);
+        try{
+            serverSocket = new DatagramSocket(port, svAddress);
         } catch (SocketException e) {
             e.printStackTrace();
         }
+
         while(true){
             try {
-                byte[] receiveData = new byte[1024];
-                byte[] sendData;
 
                 DatagramPacket sendPacket;
                 MySegment to_send;
@@ -74,6 +77,7 @@ public class Server extends Thread{
                     for (byte[] b : teste) {
                         to_send = new MySegment();
                         to_send.setFileData(b);
+                        to_send.setChecksum(ClientErrorControl.calculateChecksum(to_send.toByteArray()));
                         AgenteUDP.sendPacket(serverSocket, IPAddress, port, to_send);
 
                         received = AgenteUDP.receivePacket(serverSocket);

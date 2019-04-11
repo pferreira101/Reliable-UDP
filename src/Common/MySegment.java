@@ -10,6 +10,9 @@ public class MySegment implements Serializable {
     public byte[] checksum;
     public byte[] fileData;
 
+    public MySegment(){
+        this.checksum = new byte[] {(byte)0,(byte)0};
+    }
 
     public void setChecksum(byte[] checksum) {
         this.checksum = checksum;

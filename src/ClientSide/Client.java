@@ -48,7 +48,8 @@ public class Client {
 
         while(true) {
             received = AgenteUDP.receivePacket(clientSocket);
-
+            boolean isOk = ClientErrorControl.verificaChecksum(received.toByteArray());
+            System.out.println(isOk);
             if(isFYN(received)){ System.out.println("Recebi FYN - "+ LocalTime.now()); break;}
 
             System.out.printf("Recebi o %d fragmento -" + LocalTime.now() +"\n" ,++count);
