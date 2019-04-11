@@ -40,6 +40,7 @@ public class Server extends Thread{
                 DatagramPacket sendPacket;
                 MySegment to_send;
                 MySegment received;
+                String filename = null;
 
                 System.out.println("ESPERAR PRIMEIRO PACOTE");
                 DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
@@ -55,6 +56,16 @@ public class Server extends Thread{
                 // INICIO DE CONEXAO
                 if(isSYN(received)){
                     to_send = new MySegment(); //seria SYNACK
+
+                    filename = new String(received.fileData);
+                    System.out.println(filename);
+                    if(!(new File(filename).isFile())){
+                        System.out.println("Não existe");
+                        buildErrorFileSYN(to_send);
+                        AgenteUDP.sendPacket(serverSocket, IPAddress, port, to_send);
+                        break;
+                    }
+
                     buildSYN(to_send);
                     AgenteUDP.sendPacket(serverSocket, IPAddress, port, to_send);
                 }
@@ -65,16 +76,16 @@ public class Server extends Thread{
                 if(isACK(received)) {
                     System.out.println("Recebi um ACK - "+ LocalTime.now());
                     //TRANSFERENCIA DE FICHEIRO
-                    String filename = new String(received.fileData);
-                    List<byte[]> teste = new ArrayList<>();
+
+                    List<byte[]> bytes_pacotes = new ArrayList<>();
                     try {
-                        teste = dividePacket(filename, 1024);
+                        bytes_pacotes = dividePacket(filename, 1024);
                     }
-                    catch (IOException e){
-                        System.out.println("Ficheiro Inexistente"); // AVISAR CLIENTE QUE FICHEIRO NÃO EXISTE
+                    catch (Exception e){
+                        e.printStackTrace(); // NUNCA ENTRA AQUI PORQUE JÁ VERIFICA ANTES SE EXISTE
                     }
 
-                    for (byte[] b : teste) {
+                    for (byte[] b : bytes_pacotes) {
                         to_send = new MySegment();
                         to_send.setFileData(b);
                         to_send.setChecksum(ClientErrorControl.calculateChecksum(to_send.toByteArray()));

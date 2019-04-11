@@ -27,16 +27,22 @@ public class Client {
 
         //INICIO DE CONEXAO
         to_send = new MySegment();
-        buildSYN(to_send);
+        buildSYNWithFileName(to_send, filename);
         AgenteUDP.sendPacket(clientSocket, ip, porta, to_send);
 
         // Espera resposta SYN
         received = AgenteUDP.receivePacket(clientSocket);
 
+        // Verifica se a file existe
+        if(isSYNErrorFile(received)){
+            System.out.println("File not found. Closing...");
+            return;
+        }
+
         // Envia ACK
         if(isSYN(received)){ // DEVIA ESTAR A ESPERA DE UM SYNACK
             to_send = new MySegment();
-            buildACKWithFilename(to_send, filename);
+            buildACK(to_send);
             AgenteUDP.sendPacket(clientSocket, ip, porta, to_send);
         }
 
@@ -50,6 +56,7 @@ public class Client {
             received = AgenteUDP.receivePacket(clientSocket);
             boolean isOk = ClientErrorControl.verificaChecksum(received.toByteArray());
             System.out.println(isOk);
+
             if(isFYN(received)){ System.out.println("Recebi FYN - "+ LocalTime.now()); break;}
 
             System.out.printf("Recebi o %d fragmento -" + LocalTime.now() +"\n" ,++count);
