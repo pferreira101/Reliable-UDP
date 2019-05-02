@@ -1,23 +1,23 @@
-package Common;
+package TransfereCC;
 
-import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.file.Files;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
-import static Common.ConnectionControl.*;
 
 public class AgenteUDP {
 
+    private Map<AbstractMap.SimpleEntry, ConnectionHandler> connections;
 
-    public static  void sendPacket(DatagramSocket datagramSocket, InetAddress IPAddress, int porta, MySegment to_send){
+    public void addNewConnection(AbstractMap.SimpleEntry<InetAddress,Integer> key, ConnectionHandler value){
+        this.connections.put(key,value);
+    }
+
+    static  void sendPacket(DatagramSocket datagramSocket, InetAddress IPAddress, int porta, MySegment to_send){
         DatagramPacket sendPacket;
         try {
             byte[] data = to_send.toByteArray();
@@ -29,7 +29,7 @@ public class AgenteUDP {
         }
     }
 
-    public static MySegment receivePacket(DatagramSocket datagramSocket){
+    static MySegment receivePacket(DatagramSocket datagramSocket){
         MySegment to_return=null;
         byte[] receiveData = new byte[4096];
         byte[] sendData;
@@ -50,7 +50,7 @@ public class AgenteUDP {
 
     }
 
-    public static List<byte[]> dividePacket(String path, int max) throws IOException {
+    static List<byte[]> dividePacket(String path, int max) throws IOException {
         File file = new File(path);
 
         byte[] content = Files.readAllBytes(file.toPath());
@@ -69,21 +69,21 @@ public class AgenteUDP {
         return fragmentos;
     }
 
-    public static void sendMissingFileFYN(DatagramSocket serverSocket, InetAddress ipAddress, int port) {
+    static void sendMissingFileFYN(DatagramSocket serverSocket, InetAddress ipAddress, int port) {
         MySegment to_send = new MySegment();
-        buildErrorFileFYN(to_send);
+        ConnectionControl.buildErrorFileFYN(to_send);
         sendPacket(serverSocket, ipAddress, port, to_send);
     }
 
-    public static void sendSYN(DatagramSocket serverSocket, InetAddress ipAddress, int port) {
+    static void sendSYN(DatagramSocket serverSocket, InetAddress ipAddress, int port) {
         MySegment to_send = new MySegment();
-        buildSYN(to_send);
+        ConnectionControl.buildSYN(to_send);
         sendPacket(serverSocket, ipAddress, port, to_send);
     }
 
-    public static void sendFYN(DatagramSocket serverSocket, InetAddress ipAddress, int port) {
+    static void sendFYN(DatagramSocket serverSocket, InetAddress ipAddress, int port) {
         MySegment to_send = new MySegment();
-        buildFYN(to_send);
+        ConnectionControl.buildFYN(to_send);
         sendPacket(serverSocket, ipAddress, port, to_send);
     }
 }

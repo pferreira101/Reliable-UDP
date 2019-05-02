@@ -1,21 +1,15 @@
-package ClientSide;
-
-import Common.AgenteUDP;
-import Common.MySegment;
+package TransfereCC;
 
 import java.io.*;
 import java.net.*;
 import java.time.LocalTime;
 
+import static TransfereCC.ConnectionControl.*;
+import static TransfereCC.ErrorControl.*;
 
-import static Common.ConnectionControl.*;
+class ReceiverSide extends ConnectionHandler {
 
-
-public class Client {
-
-
-
-    public void connect(InetAddress ip, String filename, int porta) throws Exception {
+    void connect(InetAddress ip, String filename, int porta) throws Exception {
         DatagramSocket clientSocket = new DatagramSocket();
         byte[] sendData;
         byte[] receiveData = new byte[4096];
@@ -54,14 +48,13 @@ public class Client {
 
         while(true) {
             received = AgenteUDP.receivePacket(clientSocket);
-            boolean isOk = ClientErrorControl.verificaChecksum(received.toByteArray());
+            boolean isOk = verificaChecksum(received.toByteArray());
             System.out.println(isOk);
 
             if(isFYN(received)){ System.out.println("Recebi FYN - "+ LocalTime.now()); break;}
 
             System.out.printf("Recebi o %d fragmento -" + LocalTime.now() +"\n" ,++count);
             bos.write(received.fileData, 0,received.fileData.length);
-
 
             to_send = new MySegment();
             buildACK(to_send);

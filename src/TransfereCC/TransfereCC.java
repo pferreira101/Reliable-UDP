@@ -1,18 +1,15 @@
-package Common;
+package TransfereCC;
 
-import ClientSide.Client;
-import ServerSide.Server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.BindException;
 import java.net.InetAddress;
 
 public class TransfereCC {
 
 
-    public static void main(String args[]) throws Exception {
+    public static void main(String[] args) throws Exception {
         System.out.println("--- Welcome to TransfereCC ---");
         System.out.println(InetAddress.getLocalHost().getHostAddress());
 
@@ -33,14 +30,14 @@ public class TransfereCC {
 
         }
 
-        Thread server = new Thread(new Server(InetAddress.getLocalHost(), porta));
+        Thread server = new Thread(new SenderSide(InetAddress.getLocalHost(), porta));
         server.start();
         System.out.println("Server started");
 
         while(true){
             String input = buffer.readLine();
 
-            String inputs[] = input.split(" ");
+            String[] inputs = input.split(" ");
 
             switch(inputs[0]){
                 case "get":
@@ -49,7 +46,7 @@ public class TransfereCC {
                             System.out.println(InetAddress.getByName(inputs[1]).toString());
                             System.out.println("Válido");
 
-                            Client c = new Client();
+                            ReceiverSide c = new ReceiverSide();
                             InetAddress ip = InetAddress.getByName(inputs[1]);
                             String filename = inputs[2];
                             porta = Integer.parseInt(inputs[3]);
