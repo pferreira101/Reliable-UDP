@@ -1,29 +1,33 @@
-package ServerSide;
+package TransfereCC;
 
-import java.io.*;
-import java.net.*;
+import java.io.File;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import ClientSide.ClientErrorControl;
-import Common.*;
-
-import static Common.AgenteUDP.*;
-import static Common.ConnectionControl.*;
+import static TransfereCC.AgenteUDP.*;
+import static TransfereCC.ConnectionControl.*;
+import static TransfereCC.ErrorControl.*;
 
 
-public class Server extends Thread{
-    private InetAddress svAddress;
-    private int port;
-    private StateTable stateTable;
-    private DatagramSocket serverSocket;
+public class SenderSide extends ConnectionHandler implements Runnable {
+    InetAddress svAddress;
+    int port;
+    StateTable stateTable;
+    DatagramSocket serverSocket;
+    List<MySegment> to_process;
 
-    public Server(InetAddress ip, int port_number){
+    SenderSide(InetAddress ip, int port_number){
+        super();
         svAddress = ip;
         port = port_number;
         stateTable = new StateTable();
         serverSocket = null;
+        to_process = new ArrayList<>();
     }
 
     public void run() {
@@ -106,10 +110,10 @@ public class Server extends Thread{
         for (byte[] b : bytes_pacotes) {
             to_send = new MySegment();
             to_send.setFileData(b);
-            to_send.setChecksum(ClientErrorControl.calculateChecksum(to_send.toByteArray()));
+            to_send.setChecksum(calculateChecksum(to_send.toByteArray()));
             AgenteUDP.sendPacket(serverSocket, stateTable.IPAddress, stateTable.port, to_send);
 
-            received = AgenteUDP.receivePacket(serverSocket);
+            received = receivePacket(serverSocket);
             System.out.println("Recebi um ACK ao pacote enviado - "+ LocalTime.now());
         }
 
@@ -127,3 +131,4 @@ public class Server extends Thread{
             System.out.println("A terminar - "+ LocalTime.now());
     }
 }
+
