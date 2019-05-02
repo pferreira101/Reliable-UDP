@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static Common.ConnectionControl.buildACK;
+import static Common.ConnectionControl.*;
 
 public class AgenteUDP {
 
@@ -67,5 +67,23 @@ public class AgenteUDP {
         if(to_consume > 0) fragmentos.add(Arrays.copyOfRange(content,frag*max, content.length));
 
         return fragmentos;
+    }
+
+    public static void sendMissingFileFYN(DatagramSocket serverSocket, InetAddress ipAddress, int port) {
+        MySegment to_send = new MySegment();
+        buildErrorFileFYN(to_send);
+        sendPacket(serverSocket, ipAddress, port, to_send);
+    }
+
+    public static void sendSYN(DatagramSocket serverSocket, InetAddress ipAddress, int port) {
+        MySegment to_send = new MySegment();
+        buildSYN(to_send);
+        sendPacket(serverSocket, ipAddress, port, to_send);
+    }
+
+    public static void sendFYN(DatagramSocket serverSocket, InetAddress ipAddress, int port) {
+        MySegment to_send = new MySegment();
+        buildFYN(to_send);
+        sendPacket(serverSocket, ipAddress, port, to_send);
     }
 }

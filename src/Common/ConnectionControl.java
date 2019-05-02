@@ -2,8 +2,12 @@ package Common;
 
 public class ConnectionControl {
 
-     public static boolean isSYN(MySegment received){
+    public static boolean isSYN(MySegment received){
         return (received.flag == 1);
+    }
+
+    public static boolean isFileRequest(MySegment received){
+        return (received.flag == 1) && (received.fileData != null);
     }
 
     public static boolean isFYN(MySegment received){
@@ -35,7 +39,7 @@ public class ConnectionControl {
          to_send.fileData = filename.getBytes();
      }
 
-     public static void buildErrorFileSYN(MySegment to_send){
+     public static void buildErrorFileFYN(MySegment to_send){
          to_send.flag = 4;
      }
 
