@@ -6,10 +6,14 @@ class MySegment implements Serializable {
     int seq_number;
     int ack_number;
     byte flag;
-    private byte[] checksum;
+    byte[] checksum;
     byte[] fileData;
 
     MySegment(){
+        this.checksum = new byte[] {(byte)0,(byte)0};
+    }
+
+    void resetChecksum(){
         this.checksum = new byte[] {(byte)0,(byte)0};
     }
 
@@ -21,10 +25,16 @@ class MySegment implements Serializable {
         this.fileData = fileData;
     }
 
-    byte[] toByteArray() throws  IOException{
+    byte[] toByteArray() {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutput out = new ObjectOutputStream(bos);
-        out.writeObject(this);
+        ObjectOutput out = null;
+        try {
+            out = new ObjectOutputStream(bos);
+            out.writeObject(this);
+        } catch (IOException e) {
+            System.out.println("Error serializing segment");
+        }
+
         return bos.toByteArray();
     }
 
@@ -34,5 +44,8 @@ class MySegment implements Serializable {
         return (MySegment) in.readObject();
     }
 
+    public byte[] getChecksum() {
+        return this.checksum;
+    }
 }
 

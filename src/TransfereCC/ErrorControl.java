@@ -1,5 +1,7 @@
 package TransfereCC;
 
+import java.io.IOException;
+
 class ErrorControl {
 
         static byte[] calculateChecksum(byte[] data){
@@ -21,11 +23,12 @@ class ErrorControl {
             return new byte[] {(byte)((checksum & 0xFF00) >> 8), (byte)(checksum & 0xFF)};
         }
 
-        static boolean verificaChecksum(byte[] data){
+        static boolean verificaChecksum(MySegment segment) {
+            byte[] segment_checksum = segment.getChecksum();
+            segment.resetChecksum();
+            byte[] checksum = calculateChecksum(segment.toByteArray());
 
-            byte[] checksum = calculateChecksum(data);
-
-            return (checksum[0] & 0xFF) == (byte)0 && (checksum[1] & 0xFF) == (byte)0 ;
+            return (checksum[0] & 0xFF) == (segment_checksum[0] & 0xFF) && (checksum[1] & 0xFF) == (segment_checksum[1] & 0xFF) ;
         }
 
 

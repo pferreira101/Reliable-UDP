@@ -1,54 +1,88 @@
 package TransfereCC;
 
+import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.nio.file.Files;
+import java.rmi.UnknownHostException;
 import java.util.*;
+
 
 
 public class AgenteUDP {
 
-    private Map<AbstractMap.SimpleEntry, ConnectionHandler> connections;
+    Map<AbstractMap.SimpleEntry, ConnectionHandler> connections;
+    DatagramSocket serverSocket;
+    Thread listener;
 
-    public void addNewConnection(AbstractMap.SimpleEntry<InetAddress,Integer> key, ConnectionHandler value){
-        this.connections.put(key,value);
+
+    AgenteUDP(DatagramSocket serverSocket) {
+        connections = new HashMap<>();
+        this.serverSocket = serverSocket;
+        listener = new Thread(new SocketListener(this));
+        listener.start();
     }
 
-    static  void sendPacket(DatagramSocket datagramSocket, InetAddress IPAddress, int porta, MySegment to_send){
+    /**************************************
+     * Methods for adding new connections *
+     *************************************/
+
+    void addReceiverRoleConnection(InetAddress ip, int port, String filename){
+        ConnectionHandler receiver = new ReceiverSide(ip, port, filename, this);
+        this.connections.put(new AbstractMap.SimpleEntry(ip,port),receiver);
+
+        Thread t_receiver = new Thread(receiver);
+        t_receiver.start();
+    }
+
+    void addSenderRoleConnection(InetAddress ip, int port, MySegment first_packet){
+        ConnectionHandler sender = new SenderSide(ip, port, new String(first_packet.fileData), this);
+        this.connections.put(new AbstractMap.SimpleEntry(ip,port),sender);
+
+        Thread t_sender = new Thread(sender);
+        t_sender.start();
+    }
+
+    /**************************************
+     *     Methods for sending packets    *
+     *************************************/
+    void sendPacket(InetAddress IPAddress, int porta, MySegment to_send){
         DatagramPacket sendPacket;
         try {
             byte[] data = to_send.toByteArray();
             sendPacket = new DatagramPacket(data, data.length, IPAddress, porta);
-            datagramSocket.send(sendPacket);
+            serverSocket.send(sendPacket);
         }
         catch(Exception e){
             System.out.println("Error sending packet");
         }
     }
 
-    static MySegment receivePacket(DatagramSocket datagramSocket){
-        MySegment to_return=null;
-        byte[] receiveData = new byte[4096];
-        byte[] sendData;
-        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-        try{
-            datagramSocket.receive(receivePacket);
-            to_return = MySegment.fromByteArray(receivePacket.getData());
-        }
-        catch(IOException e){
-            System.out.println("Error ocurred during receive method");
-        }
-        catch(ClassNotFoundException e){
-            System.out.println("Can't convert to MySegment");
-        }
-        finally {
-            return to_return;
-        }
-
+    void sendMissingFileFYN(InetAddress ipAddress, int port) {
+        MySegment to_send = new MySegment();
+        ConnectionControl.buildErrorFileFYN(to_send);
+        sendPacket(ipAddress, port, to_send);
     }
+
+    void sendSYN(InetAddress ipAddress, int port) {
+        MySegment to_send = new MySegment();
+        ConnectionControl.buildSYN(to_send);
+        sendPacket(ipAddress, port, to_send);
+    }
+
+    void sendFYN(InetAddress ipAddress, int port) {
+        MySegment to_send = new MySegment();
+        ConnectionControl.buildFYN(to_send);
+        sendPacket(ipAddress, port, to_send);
+    }
+
+    /**************************************
+     *         Auxiliary functions        *
+     *************************************/
 
     static List<byte[]> dividePacket(String path, int max) throws IOException {
         File file = new File(path);
@@ -69,21 +103,7 @@ public class AgenteUDP {
         return fragmentos;
     }
 
-    static void sendMissingFileFYN(DatagramSocket serverSocket, InetAddress ipAddress, int port) {
-        MySegment to_send = new MySegment();
-        ConnectionControl.buildErrorFileFYN(to_send);
-        sendPacket(serverSocket, ipAddress, port, to_send);
-    }
 
-    static void sendSYN(DatagramSocket serverSocket, InetAddress ipAddress, int port) {
-        MySegment to_send = new MySegment();
-        ConnectionControl.buildSYN(to_send);
-        sendPacket(serverSocket, ipAddress, port, to_send);
-    }
 
-    static void sendFYN(DatagramSocket serverSocket, InetAddress ipAddress, int port) {
-        MySegment to_send = new MySegment();
-        ConnectionControl.buildFYN(to_send);
-        sendPacket(serverSocket, ipAddress, port, to_send);
-    }
+
 }

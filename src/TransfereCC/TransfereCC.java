@@ -1,42 +1,55 @@
 package TransfereCC;
 
 
+import javax.xml.crypto.Data;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 
 public class TransfereCC {
 
+    private static DatagramSocket beginSocket(BufferedReader buffer) {
+        DatagramSocket serverSocket = null;
+        boolean valid_port = false;
+        int port = 0;
+
+        while(!valid_port){
+            System.out.println("Insert port:");
+
+            try{
+                String input = buffer.readLine();
+                port = Integer.parseInt(input);
+                if(port < 65536 && port > 0) {
+                    serverSocket = new DatagramSocket(port, InetAddress.getLocalHost());
+                };
+                valid_port = true;
+            }
+            catch (NumberFormatException e){
+                System.out.println("Invalid port, please insert a new one.");
+            }
+            catch (IOException e){
+                System.out.println("Port already in use, please insert a new one.");
+            }
+        }
+
+
+        return serverSocket;
+    }
 
     public static void main(String[] args) throws Exception {
         System.out.println("--- Welcome to TransfereCC ---");
         System.out.println(InetAddress.getLocalHost().getHostAddress());
 
         BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
-        boolean valid_port = false;
-        int porta = 0;
+        DatagramSocket socket = beginSocket(buffer);
 
-        while(!valid_port){
-            System.out.println("Insert port:");
-            String input = buffer.readLine();
-            try{
-                porta = Integer.parseInt(input);
-                if(porta < 65536 && porta > 0) valid_port = true;
-            }
-            catch (NumberFormatException e){
-                System.out.println("Invalid port, please insert a new one.");
-            }
+        AgenteUDP connectionManager = new AgenteUDP(socket);
 
-        }
-
-        Thread server = new Thread(new SenderSide(InetAddress.getLocalHost(), porta));
-        server.start();
-        System.out.println("Server started");
-
+        //Process client's request for files
         while(true){
             String input = buffer.readLine();
-
             String[] inputs = input.split(" ");
 
             switch(inputs[0]){
@@ -46,11 +59,7 @@ public class TransfereCC {
                             System.out.println(InetAddress.getByName(inputs[1]).toString());
                             System.out.println("Válido");
 
-                            ReceiverSide c = new ReceiverSide();
-                            InetAddress ip = InetAddress.getByName(inputs[1]);
-                            String filename = inputs[2];
-                            porta = Integer.parseInt(inputs[3]);
-                            c.connect(ip, filename, porta);
+                            connectionManager.addReceiverRoleConnection(InetAddress.getByName(inputs[1]),Integer.parseInt(inputs[3]),inputs[2]);
                         }
                         catch (IOException e){
                             System.out.println("Inválido");
