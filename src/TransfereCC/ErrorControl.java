@@ -4,6 +4,10 @@ import java.io.IOException;
 
 class ErrorControl {
 
+        static void setSegmentSeqNumber(StateTable st, MySegment segment){
+            segment.seq_number = st.curr_seq_num++;
+        }
+
         static byte[] calculateChecksum(byte[] data){
             int tamanho = data.length;
             int odd = tamanho%2;

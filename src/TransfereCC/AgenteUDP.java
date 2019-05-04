@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.rmi.UnknownHostException;
 import java.util.*;
 
+import static TransfereCC.ConnectionControl.*;
+import static TransfereCC.ErrorControl.calculateChecksum;
 
 
 public class AgenteUDP {
@@ -50,35 +52,72 @@ public class AgenteUDP {
     /**************************************
      *     Methods for sending packets    *
      *************************************/
-    void sendPacket(InetAddress IPAddress, int porta, MySegment to_send){
+    private void sendSegment(MySegment to_send, InetAddress ip, int port){
         DatagramPacket sendPacket;
+
+        byte[] checksum = calculateChecksum(to_send.toByteArray());
+        to_send.setChecksum(checksum);
+
+        byte[] data = to_send.toByteArray();
+        sendPacket = new DatagramPacket(data, data.length, ip, port);
+
         try {
-            byte[] data = to_send.toByteArray();
-            sendPacket = new DatagramPacket(data, data.length, IPAddress, porta);
+            System.out.println("a enviar pacote");
             serverSocket.send(sendPacket);
-        }
-        catch(Exception e){
+        } catch (IOException e) {
             System.out.println("Error sending packet");
         }
     }
 
-    void sendMissingFileFYN(InetAddress ipAddress, int port) {
+    void sendDataSegment(StateTable st, byte[] seg_data){
         MySegment to_send = new MySegment();
-        ConnectionControl.buildErrorFileFYN(to_send);
-        sendPacket(ipAddress, port, to_send);
+
+        to_send.setFileData(seg_data);
+
+        sendSegment(to_send, st.IPAddress, st.port);
     }
 
-    void sendSYN(InetAddress ipAddress, int port) {
+    void sendMissingFileFYN(StateTable st) {
         MySegment to_send = new MySegment();
-        ConnectionControl.buildSYN(to_send);
-        sendPacket(ipAddress, port, to_send);
+
+        buildErrorFileFYN(to_send);
+
+        sendSegment(to_send, st.IPAddress, st.port);
     }
 
-    void sendFYN(InetAddress ipAddress, int port) {
+    void sendACK(StateTable st) {
         MySegment to_send = new MySegment();
-        ConnectionControl.buildFYN(to_send);
-        sendPacket(ipAddress, port, to_send);
+
+        buildACK(to_send);
+
+        sendSegment(to_send, st.IPAddress, st.port);
     }
+
+    void sendSYNACK(StateTable st) {
+        MySegment to_send = new MySegment();
+
+        buildSYNACK(to_send);
+
+        sendSegment(to_send, st.IPAddress, st.port);
+    }
+
+    void sendFYN(StateTable st) {
+        MySegment to_send = new MySegment();
+
+        buildFYN(to_send);
+
+        sendSegment(to_send, st.IPAddress, st.port);
+    }
+
+
+    void sendSYNWithFilename(StateTable st) {
+        MySegment to_send = new MySegment();
+
+        buildSYNWithFileName(to_send, st.file);
+
+        sendSegment(to_send, st.IPAddress, st.port);
+    }
+
 
     /**************************************
      *         Auxiliary functions        *
@@ -102,8 +141,5 @@ public class AgenteUDP {
 
         return fragmentos;
     }
-
-
-
 
 }

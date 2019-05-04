@@ -15,24 +15,23 @@ import static TransfereCC.ErrorControl.*;
 
 public class SenderSide extends ConnectionHandler implements Runnable {
     AgenteUDP msgSender;
-    InetAddress svAddress;
-    int port;
-    StateTable stateTable;
+    StateTable st;
 
     SenderSide(InetAddress ip, int port_number, String filename, AgenteUDP msgSender){
         super();
-        svAddress = ip;
-        port = port_number;
-        stateTable = new StateTable();
+        this.st = new StateTable();
+
+        this.st.setDestination(ip,port_number);
+        this.st.setFilename(filename);
+
         this.msgSender = msgSender;
-        this.stateTable.setDestination(ip,port_number);
-        this.stateTable.setFilename(filename);
     }
 
     public void run() {
+        System.out.println("Playing sender role");
             try {
                 // INICIO DE CONEXAO - Verifica se existe o ficheiro pedido
-                boolean connection_accepted = establishConnection(stateTable.file);
+                boolean connection_accepted = establishConnection(st.file);
 
                 if (connection_accepted) {
                     waitSegment();
@@ -57,11 +56,11 @@ public class SenderSide extends ConnectionHandler implements Runnable {
         if(!(new File(wanted_file).isFile())){
             System.out.println("Não existe o ficheiro pedido");
 
-            msgSender.sendMissingFileFYN(stateTable.IPAddress, stateTable.port);
+            msgSender.sendMissingFileFYN(st);
             return false;
         }
 
-        msgSender.sendSYN(stateTable.IPAddress, stateTable.port);
+        msgSender.sendSYNACK(st);
         return true;
     }
 
@@ -72,19 +71,14 @@ public class SenderSide extends ConnectionHandler implements Runnable {
 
         List<byte[]> bytes_pacotes = new ArrayList<>();
         try {
-            bytes_pacotes = dividePacket(stateTable.file, 1024);
+            bytes_pacotes = dividePacket(st.file, 1024);
         }
         catch (Exception e){
             e.printStackTrace(); // NUNCA ENTRA AQUI PORQUE JÁ VERIFICA ANTES SE EXISTE
         }
 
         for (byte[] b : bytes_pacotes) {
-            to_send = new MySegment();
-            to_send.setFileData(b);
-            byte[] checksum = calculateChecksum(to_send.toByteArray());
-
-            to_send.setChecksum(checksum);
-            msgSender.sendPacket(stateTable.IPAddress, stateTable.port, to_send);
+            msgSender.sendDataSegment(st, b);
 
             waitSegment();
             received = getNextSegment();
@@ -98,7 +92,7 @@ public class SenderSide extends ConnectionHandler implements Runnable {
 
 
     private void endConnection() throws InterruptedException {
-        msgSender.sendFYN(stateTable.IPAddress, stateTable.port);
+        msgSender.sendFYN(st);
 
         waitSegment();
         MySegment received = getNextSegment();
