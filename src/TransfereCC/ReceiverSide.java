@@ -44,6 +44,8 @@ class ReceiverSide extends ConnectionHandler {
 
         // Envia ACK
         if(isSYNACK(received)){ // DEVIA ESTAR A ESPERA DE UM SYNACK;
+            processReceivedAck(received,st);
+            System.out.println("Recebi synack ao pedido de conexao - "+ LocalTime.now());
             msg_sender.sendACK(st);
         }
 
@@ -52,7 +54,7 @@ class ReceiverSide extends ConnectionHandler {
         } catch (Exception e) {
             System.out.println("Error saving file");
         }
-
+        System.out.println("Numero de pacotes por confirmar = " + this.st.unAckedSegments.size());
     }
 
 
@@ -69,7 +71,6 @@ class ReceiverSide extends ConnectionHandler {
             waitSegment();
             received = getNextSegment();
             boolean isOk = verificaChecksum(received);
-            System.out.println("Checksum is " + isOk);
 
             if(isFYN(received)){
                 System.out.println("Recebi FYN - "+ LocalTime.now());
@@ -77,7 +78,7 @@ class ReceiverSide extends ConnectionHandler {
                 break;
             }
 
-            System.out.printf("Recebi o %d fragmento -" + LocalTime.now() +"\n" ,++count);
+            System.out.printf("Recebi o %d fragmento - (seq : %d) " + LocalTime.now() +"\n" ,++count, received.seq_number);
             bos.write(received.fileData, 0,received.fileData.length);
 
             msg_sender.sendACK(st);

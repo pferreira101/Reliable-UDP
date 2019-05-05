@@ -19,7 +19,6 @@ class ConnectionHandler implements Runnable{
     void addSegmentToProcess(MySegment to_process) {
         l.lock();
         this.segmentsToProcess.add(to_process);
-        /* Debug */ System.out.println("A adicionar um segmente à ll, novo tam = " + this.segmentsToProcess.size());
         l.unlock();
     }
 

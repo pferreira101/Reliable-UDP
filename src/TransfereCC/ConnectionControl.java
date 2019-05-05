@@ -8,10 +8,6 @@ class ConnectionControl {
     static final int FYNERRORFILE = 4;
     static final int SYNACK = 5;
 
-    static boolean isSYN(MySegment received){
-        return (received.flag == SYN);
-    }
-
     static boolean isFileRequest(MySegment received){
         return (received.flag == SYN) && (received.fileData != null);
     }
@@ -30,10 +26,6 @@ class ConnectionControl {
 
     static boolean isFYNErrorFile(MySegment received){
         return (received.flag == FYNERRORFILE);
-    }
-
-    static void buildSYN(MySegment to_send){
-         to_send.flag = SYN;
     }
 
     static void buildFYN(MySegment to_send){

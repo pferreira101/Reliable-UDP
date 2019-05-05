@@ -1,5 +1,6 @@
 package TransfereCC;
 
+import javax.swing.plaf.nimbus.State;
 import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.IOException;
@@ -9,10 +10,11 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.nio.file.Files;
 import java.rmi.UnknownHostException;
+import java.time.LocalTime;
 import java.util.*;
 
 import static TransfereCC.ConnectionControl.*;
-import static TransfereCC.ErrorControl.calculateChecksum;
+import static TransfereCC.ErrorControl.*;
 
 
 public class AgenteUDP {
@@ -42,7 +44,7 @@ public class AgenteUDP {
     }
 
     void addSenderRoleConnection(InetAddress ip, int port, MySegment first_packet){
-        ConnectionHandler sender = new SenderSide(ip, port, new String(first_packet.fileData), this);
+        ConnectionHandler sender = new SenderSide(ip, port, new String(first_packet.fileData), first_packet.seq_number,this);
         this.connections.put(new AbstractMap.SimpleEntry(ip,port),sender);
 
         Thread t_sender = new Thread(sender);
@@ -52,17 +54,21 @@ public class AgenteUDP {
     /**************************************
      *     Methods for sending packets    *
      *************************************/
-    private void sendSegment(MySegment to_send, InetAddress ip, int port){
+    private void sendSegment(MySegment to_send, StateTable st){
         DatagramPacket sendPacket;
+
+        if(!isACK(to_send)){
+            setSegmentSeqNumber(st, to_send);
+            st.unAckedSegments.add(to_send);
+        }
 
         byte[] checksum = calculateChecksum(to_send.toByteArray());
         to_send.setChecksum(checksum);
 
         byte[] data = to_send.toByteArray();
-        sendPacket = new DatagramPacket(data, data.length, ip, port);
+        sendPacket = new DatagramPacket(data, data.length, st.IPAddress, st.port);
 
         try {
-            System.out.println("a enviar pacote");
             serverSocket.send(sendPacket);
         } catch (IOException e) {
             System.out.println("Error sending packet");
@@ -73,40 +79,42 @@ public class AgenteUDP {
         MySegment to_send = new MySegment();
 
         to_send.setFileData(seg_data);
-
-        sendSegment(to_send, st.IPAddress, st.port);
+        /* Debug */ System.out.printf("A enviar dados (SEQ : %d) - "+ LocalTime.now()+"\n",st.curr_seq_num);
+        sendSegment(to_send, st);
     }
 
     void sendMissingFileFYN(StateTable st) {
         MySegment to_send = new MySegment();
 
         buildErrorFileFYN(to_send);
-
-        sendSegment(to_send, st.IPAddress, st.port);
+        /* Debug */ System.out.printf("A enviar missingfilefyn (SEQ : %d) - "+ LocalTime.now()+"\n",st.curr_seq_num);
+        sendSegment(to_send, st);
     }
 
     void sendACK(StateTable st) {
         MySegment to_send = new MySegment();
 
         buildACK(to_send);
-
-        sendSegment(to_send, st.IPAddress, st.port);
+        setAckNumber(st,to_send);
+        /* Debug */ System.out.printf("A enviar ack (SEQ : %d) (ACK = %d)- "+ LocalTime.now()+"\n",st.curr_seq_num, to_send.ack_number);
+        sendSegment(to_send, st);
     }
 
     void sendSYNACK(StateTable st) {
         MySegment to_send = new MySegment();
 
         buildSYNACK(to_send);
-
-        sendSegment(to_send, st.IPAddress, st.port);
+        setAckNumber(st,to_send);
+        /* Debug */ System.out.printf("A enviar synack (SEQ : %d) (ACK = %d)- "+ LocalTime.now()+"\n",st.curr_seq_num, to_send.ack_number);
+        sendSegment(to_send, st);
     }
 
     void sendFYN(StateTable st) {
         MySegment to_send = new MySegment();
 
         buildFYN(to_send);
-
-        sendSegment(to_send, st.IPAddress, st.port);
+        /* Debug */ System.out.printf("A enviar fyn (SEQ : %d) - "+ LocalTime.now()+"\n",st.curr_seq_num);
+        sendSegment(to_send, st);
     }
 
 
@@ -114,8 +122,8 @@ public class AgenteUDP {
         MySegment to_send = new MySegment();
 
         buildSYNWithFileName(to_send, st.file);
-
-        sendSegment(to_send, st.IPAddress, st.port);
+        /* Debug */ System.out.printf("A enviar synwithfilename (SEQ : %d) - "+ LocalTime.now()+"\n",st.curr_seq_num);
+        sendSegment(to_send, st);
     }
 
 

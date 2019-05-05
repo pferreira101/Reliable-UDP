@@ -8,6 +8,19 @@ class ErrorControl {
             segment.seq_number = st.curr_seq_num++;
         }
 
+        static void setAckNumber(StateTable st, MySegment segment){
+            segment.ack_number = ++st.last_correct_seq;
+        }
+
+        static void processReceivedAck(MySegment segment, StateTable st){
+            int ack_num = segment.ack_number;
+
+            // tree set ordenado por ordem crescente de seq num -> eliminar segmentos com seq num menor que o do ack
+            // (cumulative ack)
+            while(st.unAckedSegments.size() != 0 && st.unAckedSegments.first().seq_number < ack_num)
+                st.unAckedSegments.pollFirst(); // elimina o primeiro
+        }
+
         static byte[] calculateChecksum(byte[] data){
             int tamanho = data.length;
             int odd = tamanho%2;
