@@ -3,6 +3,7 @@ package TransfereCC;
 import java.io.*;
 import java.net.*;
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -44,6 +45,23 @@ class ReceiverSide extends ConnectionHandler {
 
         // Envia ACK
         if(isSYNACK(received)){ // DEVIA ESTAR A ESPERA DE UM SYNACK;
+            byte read_assinatura[] = new byte[4];
+            byte read_pubkey[] = new byte[4];
+
+            System.arraycopy(received.fileData, 0, read_assinatura, 0, 4);
+            System.arraycopy(received.fileData, 4, read_pubkey, 0, 4);
+
+            int assinatura_size = fromByteArray(read_assinatura);
+            int pubkey_size = fromByteArray(read_pubkey);
+
+            byte assinatura[] = new byte[assinatura_size];
+            byte public_key[] = new byte[pubkey_size];
+
+            System.arraycopy(received.fileData, 8, assinatura, 0, assinatura_size);
+            System.arraycopy(received.fileData, 8+assinatura_size, public_key, 0, pubkey_size);
+
+            st.setCrypto(assinatura, public_key);
+
             msg_sender.sendACK(st);
         }
 
@@ -61,7 +79,7 @@ class ReceiverSide extends ConnectionHandler {
 
         new File("downloads/").mkdirs();
 
-        FileOutputStream fos = new FileOutputStream("downloads/" + st.file);;
+        FileOutputStream fos = new FileOutputStream("downloads/" + st.file);
         BufferedOutputStream bos = new BufferedOutputStream(fos);
 
         int count=0;
@@ -74,6 +92,7 @@ class ReceiverSide extends ConnectionHandler {
             if(isFYN(received)){
                 System.out.println("Recebi FYN - "+ LocalTime.now());
                 msg_sender.sendACK(st);
+
                 break;
             }
 
@@ -85,5 +104,16 @@ class ReceiverSide extends ConnectionHandler {
 
         bos.flush();
         bos.close();
+
+        // Verifica se o ficheiro é o mesmo
+        boolean check_file = Crypto.verifySign("downloads/"+st.file, st.assinatura, st.public_key);
+        System.out.println("VERIFICA FICHEIRO C/ ASSINATURA DIGITAL = " + check_file);
+    }
+
+
+    /****************** FUNÇÕES AUXILIARES ********************/
+
+    int fromByteArray(byte[] bytes) {
+        return bytes[0] << 24 | (bytes[1] & 0xFF) << 16 | (bytes[2] & 0xFF) << 8 | (bytes[3] & 0xFF);
     }
 }
