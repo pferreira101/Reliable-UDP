@@ -1,5 +1,7 @@
 package TransfereCC;
 
+import Common.Pair;
+
 import java.io.File;
 import java.net.InetAddress;
 import java.time.LocalTime;
@@ -57,7 +59,8 @@ public class SenderSide extends ConnectionHandler implements Runnable {
             return false;
         }
 
-        msgSender.sendSYNACK(st);
+        Pair<byte[], byte[]> assinatura = Crypto.generateSign(wanted_file, this.msgSender.keys);
+        msgSender.sendSYNACK(st, assinatura);
 
         waitSegment();
         MySegment to_process = getNextSegment();

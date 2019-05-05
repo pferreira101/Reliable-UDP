@@ -1,7 +1,10 @@
 package TransfereCC;
 
+
 import javax.swing.plaf.nimbus.State;
+import Common.Pair;
 import javax.xml.crypto.Data;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -10,7 +13,10 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.nio.file.Files;
 import java.rmi.UnknownHostException;
+
 import java.time.LocalTime;
+import java.security.KeyPair;
+
 import java.util.*;
 
 import static TransfereCC.ConnectionControl.*;
@@ -23,12 +29,22 @@ public class AgenteUDP {
     DatagramSocket serverSocket;
     Thread listener;
 
+    KeyPair keys;
 
     AgenteUDP(DatagramSocket serverSocket) {
         connections = new HashMap<>();
         this.serverSocket = serverSocket;
         listener = new Thread(new SocketListener(this));
         listener.start();
+
+        try{
+            keys = Crypto.generateKeys();
+        }
+        catch (Exception e){
+            System.out.println("Ocorreu um erro na geração da chave: ");
+            e.printStackTrace();
+        }
+
     }
 
     /**************************************
@@ -100,14 +116,28 @@ public class AgenteUDP {
         sendSegment(to_send, st);
     }
 
-    void sendSYNACK(StateTable st) {
-        MySegment to_send = new MySegment();
 
-        buildSYNACK(to_send);
-        setAckNumber(st,to_send);
-        /* Debug */ System.out.printf("A enviar synack (SEQ : %d) (ACK = %d)- "+ LocalTime.now()+"\n",st.curr_seq_num, to_send.ack_number);
-        sendSegment(to_send, st);
+    void sendSYNACK(StateTable st, Pair<byte[], byte[]> assinatura) {
+        try{
+            MySegment to_send = new MySegment();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+            outputStream.write(toByteArray(assinatura.first.length));
+            outputStream.write(toByteArray(assinatura.second.length));
+            outputStream.write(assinatura.first);
+            outputStream.write(assinatura.second);
+            byte dados[] = outputStream.toByteArray( );
+
+            to_send.setFileData(dados); // passar para o buildSYNACK?
+
+            buildSYNACK(to_send);
+            setAckNumber(st,to_send);
+            /* Debug */ System.out.printf("A enviar synack (SEQ : %d) (ACK = %d)- "+ LocalTime.now()+"\n",st.curr_seq_num, to_send.ack_number);
+            sendSegment(to_send, st);
+        }
+        catch (Exception e){}
+
     }
+
 
     void sendFYN(StateTable st) {
         MySegment to_send = new MySegment();
@@ -148,6 +178,14 @@ public class AgenteUDP {
         if(to_consume > 0) fragmentos.add(Arrays.copyOfRange(content,frag*max, content.length));
 
         return fragmentos;
+    }
+
+    byte[] toByteArray(int value) {
+        return new byte[] {
+                (byte)(value >> 24),
+                (byte)(value >> 16),
+                (byte)(value >> 8),
+                (byte)value };
     }
 
 }
