@@ -20,7 +20,7 @@ import java.util.List;
 public class Crypto {
 
 
-    public static KeyPair generateKeys() throws NoSuchProviderException, NoSuchAlgorithmException {
+    static KeyPair generateKeys() throws NoSuchProviderException, NoSuchAlgorithmException {
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", "SUN");
 
         SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
@@ -34,7 +34,7 @@ public class Crypto {
 
     /******************* ASSINATURA DIGITAL *******************/
 
-    public static Pair<byte[], byte[]> generateSign(String file, KeyPair pair) {
+     static Pair<byte[], byte[]> generateSignature(String file, KeyPair pair) {
 
         try {
             PrivateKey priv = pair.getPrivate();
@@ -69,7 +69,7 @@ public class Crypto {
     }
 
 
-    public static boolean verifySign(String file, byte[] sig_to_verify, byte[] pubkey_bytes) {
+    static boolean verifySignature(String file, byte[] sig_to_verify, byte[] pubkey_bytes) {
 
         try {
             // Gera PublicKey a partir do byte[]

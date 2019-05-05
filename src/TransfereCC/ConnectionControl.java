@@ -1,5 +1,9 @@
 package TransfereCC;
 
+import Common.Pair;
+
+import java.io.ByteArrayOutputStream;
+
 class ConnectionControl {
 
     static final int SYN = 1;
@@ -45,8 +49,30 @@ class ConnectionControl {
          to_send.flag = FYNERRORFILE;
     }
 
-    public static void buildSYNACK(MySegment to_send){
+    static void buildSYNACK(MySegment to_send, byte[] assinatura, byte[] public_key){
         to_send.flag = SYNACK;
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            outputStream.write(toByteArray(assinatura.length));
+            outputStream.write(toByteArray(public_key.length));
+
+            outputStream.write(assinatura);
+            outputStream.write(public_key);
+
+            byte[] dados = outputStream.toByteArray();
+
+            to_send.setFileData(dados);
+        }
+        catch (Exception e){}
+
+    }
+
+   private static byte[] toByteArray(int value) {
+        return new byte[] {
+                (byte)(value >> 24),
+                (byte)(value >> 16),
+                (byte)(value >> 8),
+                (byte)value };
     }
 
 }

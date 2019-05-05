@@ -117,25 +117,12 @@ public class AgenteUDP {
     }
 
 
-    void sendSYNACK(StateTable st, Pair<byte[], byte[]> assinatura) {
-        try{
-            MySegment to_send = new MySegment();
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
-            outputStream.write(toByteArray(assinatura.first.length));
-            outputStream.write(toByteArray(assinatura.second.length));
-            outputStream.write(assinatura.first);
-            outputStream.write(assinatura.second);
-            byte dados[] = outputStream.toByteArray( );
-
-            to_send.setFileData(dados); // passar para o buildSYNACK?
-
-            buildSYNACK(to_send);
-            setAckNumber(st,to_send);
-            /* Debug */ System.out.printf("A enviar synack (SEQ : %d) (ACK = %d)- "+ LocalTime.now()+"\n",st.curr_seq_num, to_send.ack_number);
-            sendSegment(to_send, st);
-        }
-        catch (Exception e){}
-
+    void sendSYNACK(StateTable st) {
+        MySegment to_send = new MySegment();
+        buildSYNACK(to_send, st.assinatura, st.public_key);
+        setAckNumber(st,to_send);
+        /* Debug */ System.out.printf("A enviar synack (SEQ : %d) (ACK = %d)- "+ LocalTime.now()+"\n",st.curr_seq_num, to_send.ack_number);
+        sendSegment(to_send, st);
     }
 
 
@@ -180,12 +167,5 @@ public class AgenteUDP {
         return fragmentos;
     }
 
-    byte[] toByteArray(int value) {
-        return new byte[] {
-                (byte)(value >> 24),
-                (byte)(value >> 16),
-                (byte)(value >> 8),
-                (byte)value };
-    }
 
 }

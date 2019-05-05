@@ -12,6 +12,7 @@ import java.util.*;
 
 import static TransfereCC.AgenteUDP.*;
 import static TransfereCC.ConnectionControl.*;
+import static TransfereCC.Crypto.*;
 import static TransfereCC.ErrorControl.*;
 
 
@@ -59,8 +60,9 @@ public class SenderSide extends ConnectionHandler implements Runnable {
             return false;
         }
 
-        Pair<byte[], byte[]> assinatura = Crypto.generateSign(wanted_file, this.msgSender.keys);
-        msgSender.sendSYNACK(st, assinatura);
+        Pair<byte[], byte[]> assinatura = generateSignature(wanted_file, this.msgSender.keys);
+        this.st.setCrypto(assinatura.first, assinatura.second);
+        msgSender.sendSYNACK(st);
 
         waitSegment();
         MySegment to_process = getNextSegment();
