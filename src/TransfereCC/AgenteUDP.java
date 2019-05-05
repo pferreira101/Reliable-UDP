@@ -112,7 +112,7 @@ public class AgenteUDP {
 
         buildACK(to_send);
         setAckNumber(st,to_send);
-        /* Debug */ System.out.printf("A enviar ack (SEQ : %d) (ACK = %d)- "+ LocalTime.now()+"\n",st.curr_seq_num, to_send.ack_number);
+        /* Debug */ System.out.printf("A enviar ack (ACK = %d)- "+ LocalTime.now()+"\n", to_send.ack_number);
         sendSegment(to_send, st);
     }
 
