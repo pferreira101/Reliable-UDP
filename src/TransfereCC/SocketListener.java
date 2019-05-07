@@ -50,6 +50,7 @@ public class SocketListener implements Runnable  {
     private void setPacketAtConnection(SimpleEntry key, MySegment to_process) {
         ConnectionHandler connection = connectionManager.connections.get(key);
         if(connection != null){
+            System.out.println("********Novo pacote recebido********");
             boolean ready_to_process = connection.addSegmentToProcess(to_process);
             if(ready_to_process) wakeUpConnectionHandler(connection);
             deferLockAttempt(connection);
@@ -71,6 +72,7 @@ public class SocketListener implements Runnable  {
 
     private void wakeUpConnectionHandler(ConnectionHandler connection){
         connection.l.lock();
+        connection.readyToProcess = true;
         connection.waitPacketCondition.signal();
         connection.l.unlock();
     }

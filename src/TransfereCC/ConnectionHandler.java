@@ -1,5 +1,6 @@
 package TransfereCC;
 
+import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -14,6 +15,7 @@ class ConnectionHandler implements Runnable{
     Condition waitPacketCondition;
     StateTable st;
     AgenteUDP msg_sender;
+    boolean readyToProcess;
 
     ConnectionHandler(){
         l = new ReentrantLock(true);
@@ -30,9 +32,11 @@ class ConnectionHandler implements Runnable{
         // check integrity
         boolean isOk = verificaChecksum(received);
         if(!isOk) {
+            System.out.println("Chechsum errado (SEQ:"+received.seq_number+" || ACK: "+received.ack_number+") - "+ LocalTime.now());
             msg_sender.requestRepeat(this.st,received.seq_number-1);
             return false;
         }
+        System.out.println("Chechsum correto (SEQ:"+received.seq_number+" || ACK: "+received.ack_number+") - "+ LocalTime.now());
         l.lock();
         // error free segments will be buffered
         this.segmentsToProcess.add(received);
@@ -49,7 +53,7 @@ class ConnectionHandler implements Runnable{
 
     void waitSegment() {
         l.lock();
-        while (segmentsToProcess.size() == 0) {
+        while (segmentsToProcess.size() == 0 || !readyToProcess) {
             try {
                 waitPacketCondition.await();
             } catch (InterruptedException e) {

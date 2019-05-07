@@ -24,21 +24,22 @@ class ErrorControl {
             int ack_num = segment.ack_number;
 
             if(ack_num > send_base) {
+                System.out.println("Comparacao feita : ACK : " + ack_num + " Send Base : " + send_base);
                 // tree set ordenado por ordem crescente de seq num -> eliminar segmentos com seq num menor que o do ack (cumulative ack)
-                while (st.unAckedSegments.size() != 0 && st.unAckedSegments.first().seq_number < ack_num)
-                    st.unAckedSegments.pollFirst(); // elimina o primeiro
+                while (st.unAckedSegments.size() != 0 && st.unAckedSegments.first().seq_number < ack_num) {
+                    MySegment confirmed = st.unAckedSegments.pollFirst(); // elimina o primeiro
+                    System.out.println("Rececao de segmento confirmada (SEQ: "+confirmed.seq_number+") - "+ LocalTime.now() );
+                }
+                return -2;
             }
             else{
                 int num_dup = st.dupACKs.getOrDefault(ack_num,0);
-                if(num_dup == 1){
-                    st.dupACKs.remove(ack_num);
-                    return ack_num;
-                }
-                else {
-                    st.dupACKs.put(ack_num,1);
-                }
+                st.dupACKs.put(ack_num,num_dup+1);
+                if(num_dup == 1)
+                    return ack_num; // recebeu segundo duplicado
+                else
+                    return -1;
             }
-            return -1;
         }
 
         static boolean isInOrder(StateTable st, MySegment segment){

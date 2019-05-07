@@ -24,7 +24,7 @@ import static TransfereCC.ErrorControl.*;
 
 
 public class AgenteUDP {
-
+    DatagramPacket desordenado;
     Map<AbstractMap.SimpleEntry, ConnectionHandler> connections;
     DatagramSocket serverSocket;
     Thread listener;
@@ -32,6 +32,7 @@ public class AgenteUDP {
     KeyPair keys;
 
     AgenteUDP(DatagramSocket serverSocket) {
+
         connections = new HashMap<>();
         this.serverSocket = serverSocket;
         listener = new Thread(new SocketListener(this));
@@ -70,6 +71,19 @@ public class AgenteUDP {
     /**************************************
      *     Methods for sending packets    *
      *************************************/
+    void directSend(MySegment to_send, StateTable st) {
+        DatagramPacket sendPacket;
+
+        byte[] data = to_send.toByteArray();
+        sendPacket = new DatagramPacket(data, data.length, st.IPAddress, st.port);
+
+        try {
+            serverSocket.send(sendPacket);
+        } catch (IOException e) {
+            System.out.println("Error sending packet");
+        }
+    }
+
     private void sendSegment(MySegment to_send, StateTable st){
         DatagramPacket sendPacket;
 
@@ -81,11 +95,19 @@ public class AgenteUDP {
         byte[] checksum = calculateChecksum(to_send.toByteArray());
         to_send.setChecksum(checksum);
 
+        // criar gap de 3 pacotes
+        //if(to_send.fileData != null && (to_send.seq_number > 2 && to_send.seq_number < 6)) return ;
+
         byte[] data = to_send.toByteArray();
         sendPacket = new DatagramPacket(data, data.length, st.IPAddress, st.port);
 
+        // mandar pacotes fora de ordem
+        if(to_send.fileData != null && to_send.seq_number==5) {this.desordenado = sendPacket; return ;}
+
         try {
             serverSocket.send(sendPacket);
+            //mandar o pacote travado anteriormente
+            //if(to_send.fileData != null && to_send.seq_number==6) serverSocket.send(desordenado);
         } catch (IOException e) {
             System.out.println("Error sending packet");
         }
@@ -148,9 +170,10 @@ public class AgenteUDP {
 
         buildACK(to_send);
         to_send.ack_number = ack_value;
+
         /* Debug */ System.out.printf("A enviar DUPack (ACK = %d)- "+ LocalTime.now()+"\n", to_send.ack_number);
         sendSegment(to_send, st);
-        sendSegment(to_send, st);
+        directSend(to_send, st);// para nao voltar a alterar valor do checksum
     }
 
 

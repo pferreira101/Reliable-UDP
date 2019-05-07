@@ -90,14 +90,30 @@ public class SenderSide extends ConnectionHandler implements Runnable {
             received = getNextSegment();
             if(isACK(received)) {
                 int re_send = processReceivedAck(received,this.st);
-                if(re_send == -1)System.out.printf("Recebi um ACK (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
-                else System.out.printf("Recebi um ACK repetido (ACK : %d ) - " + LocalTime.now() + "\n", re_send);
+                if(re_send == -2) System.out.printf("Recebi um ACK (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
+                if(re_send == -1) System.out.printf("Recebi primeiro ack repetido (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
+                if(re_send > 0) {System.out.printf("Recebi segundo ack repetido (ACK : %d ) - " + LocalTime.now() + "\n", re_send); reSend(re_send);}
+            }
+        }
+
+        System.out.println("####### Supostamente todos os pacotes foram enviados. Pacotes:" + data_packets.size()+", enviados:" +i );
+        while(st.unAckedSegments.size()>0) {
+            waitSegment();
+            received = getNextSegment();
+            if (isACK(received)) {
+                int re_send = processReceivedAck(received, this.st);
+                if(re_send == -2) System.out.printf("Recebi um ACK (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
+                if(re_send == -1) System.out.printf("Recebi primeiro ack repetido (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
+                if(re_send > 0) {System.out.printf("Recebi segundo ack repetido (ACK : %d ) - " + LocalTime.now() + "\n", re_send); reSend(re_send);}
             }
         }
 
     }
 
-
+    private void reSend(int re_send) {
+        MySegment to_send = this.st.unAckedSegments.first();
+        this.msg_sender.directSend(to_send, this.st);
+    }
 
 
     private void endConnection() throws InterruptedException {
