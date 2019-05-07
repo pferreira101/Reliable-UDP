@@ -3,22 +3,18 @@ package TransfereCC;
 import java.io.*;
 import java.net.*;
 import java.time.LocalTime;
-import java.util.Arrays;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.*;
 
 import static TransfereCC.ConnectionControl.*;
 import static TransfereCC.ErrorControl.*;
 
 class ReceiverSide extends ConnectionHandler {
-    StateTable st;
-    AgenteUDP msg_sender;
+
 
 
     public ReceiverSide(InetAddress ip, int port, String filename, AgenteUDP sender) {
         super();
-
+        this.segmentsToProcess = new TreeSet<>((s1, s2) -> Integer.compare(s1.seq_number, s2.seq_number) );
         this.st = new StateTable();
         this.st.setDestination(ip, port);
         this.st.setFilename(filename);
@@ -62,7 +58,7 @@ class ReceiverSide extends ConnectionHandler {
 
 
     void receiveFile() throws Exception {
-        MySegment received;
+        MySegment received=null;
 
         new File("downloads/").mkdirs();
 
@@ -72,20 +68,22 @@ class ReceiverSide extends ConnectionHandler {
         int count=0;
         while(true) {
             waitSegment();
-            received = getNextSegment();
-            boolean isOk = verificaChecksum(received);
+            // only wakes up when in order, error free, segment was received
+            while(this.segmentsToProcess.size() > 0) {
+                received = getNextSegment();
 
-            if(isFYN(received)){
-                System.out.println("Recebi FYN - "+ LocalTime.now());
+                if (isFYN(received)) {
+                    System.out.println("Recebi FYN - " + LocalTime.now());
+                    msg_sender.sendACK(st);
+                    break;
+                }
                 msg_sender.sendACK(st);
 
-                break;
+                //System.out.printf("Recebi o %d fragmento - (seq : %d) " + LocalTime.now() + "\n", ++count, received.seq_number);
+                bos.write(received.fileData, 0, received.fileData.length);
+
             }
-
-            System.out.printf("Recebi o %d fragmento - (seq : %d) " + LocalTime.now() +"\n" ,++count, received.seq_number);
-            bos.write(received.fileData, 0,received.fileData.length);
-
-            msg_sender.sendACK(st);
+            if(isFYN(received))break;
         }
 
         bos.flush();

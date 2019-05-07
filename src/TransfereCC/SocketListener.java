@@ -5,6 +5,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static TransfereCC.ConnectionControl.*;
 import static TransfereCC.MySegment.*;
@@ -47,14 +50,24 @@ public class SocketListener implements Runnable  {
     private void setPacketAtConnection(SimpleEntry key, MySegment to_process) {
         ConnectionHandler connection = connectionManager.connections.get(key);
         if(connection != null){
-            connection.addSegmentToProcess(to_process);
-            wakeUpConnectionHandler(connection);
+            boolean ready_to_process = connection.addSegmentToProcess(to_process);
+            if(ready_to_process) wakeUpConnectionHandler(connection);
+            deferLockAttempt(connection);
         }
         else //if no connection matches key, new request was made
             if(isFileRequest(to_process))
                 connectionManager.addSenderRoleConnection((InetAddress)key.getKey(), (Integer)key.getValue(),to_process);
 
     }
+
+    private void deferLockAttempt(ConnectionHandler connection) {
+            try {
+                Thread.sleep(5);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+    }
+
 
     private void wakeUpConnectionHandler(ConnectionHandler connection){
         connection.l.lock();

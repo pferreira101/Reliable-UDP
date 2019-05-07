@@ -143,6 +143,16 @@ public class AgenteUDP {
         sendSegment(to_send, st);
     }
 
+    void requestRepeat(StateTable st, int ack_value) {
+        MySegment to_send = new MySegment();
+
+        buildACK(to_send);
+        to_send.ack_number = ack_value;
+        /* Debug */ System.out.printf("A enviar DUPack (ACK = %d)- "+ LocalTime.now()+"\n", to_send.ack_number);
+        sendSegment(to_send, st);
+        sendSegment(to_send, st);
+    }
+
 
     /**************************************
      *         Auxiliary functions        *
@@ -166,6 +176,5 @@ public class AgenteUDP {
 
         return fragmentos;
     }
-
 
 }

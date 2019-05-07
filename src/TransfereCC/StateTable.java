@@ -1,23 +1,28 @@
 package TransfereCC;
 
+import java.lang.invoke.VarHandle;
 import java.net.InetAddress;
-import java.util.TreeSet;
+import java.util.*;
 
 class StateTable {
+    int windowSize;
     int curr_seq_num;
-    int last_correct_seq;
+    int last_ack_value;
     InetAddress IPAddress;
     int port;
     String file;
     int connection_state; // 0 sem conexão -- 1 em inicio de conexao -- 2 em transferencia -- 3 em termino de conexao
     TreeSet<MySegment> unAckedSegments;
+    Map<Integer,Integer> dupACKs;
     byte[] assinatura;
     byte[] public_key;
 
     StateTable(){
         connection_state=0;
         curr_seq_num=0;
+        windowSize = 4;
         unAckedSegments = new TreeSet<>((s1,s2) -> Integer.compare(s1.seq_number, s2.seq_number) ); // ordenar por seq number
+        dupACKs = new HashMap<>();
     }
 
 

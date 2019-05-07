@@ -1,6 +1,9 @@
 package TransfereCC;
 
+import Common.Pair;
+
 import java.io.IOException;
+import java.time.LocalTime;
 
 class ErrorControl {
 
@@ -9,16 +12,40 @@ class ErrorControl {
         }
 
         static void setAckNumber(StateTable st, MySegment segment){
-            segment.ack_number = ++st.last_correct_seq;
+            segment.ack_number = ++st.last_ack_value;
         }
 
-        static void processReceivedAck(MySegment segment, StateTable st){
+    /**
+     * @return -1 if there are no segments to re-send
+     * @return n>1 if segment with seq_number=n is to be re-sent
+     */
+        static int processReceivedAck(MySegment segment, StateTable st){
+            int send_base = st.unAckedSegments.first().seq_number;
             int ack_num = segment.ack_number;
 
-            // tree set ordenado por ordem crescente de seq num -> eliminar segmentos com seq num menor que o do ack
-            // (cumulative ack)
-            while(st.unAckedSegments.size() != 0 && st.unAckedSegments.first().seq_number < ack_num)
-                st.unAckedSegments.pollFirst(); // elimina o primeiro
+            if(ack_num > send_base) {
+                // tree set ordenado por ordem crescente de seq num -> eliminar segmentos com seq num menor que o do ack (cumulative ack)
+                while (st.unAckedSegments.size() != 0 && st.unAckedSegments.first().seq_number < ack_num)
+                    st.unAckedSegments.pollFirst(); // elimina o primeiro
+            }
+            else{
+                int num_dup = st.dupACKs.getOrDefault(ack_num,0);
+                if(num_dup == 1){
+                    st.dupACKs.remove(ack_num);
+                    return ack_num;
+                }
+                else {
+                    st.dupACKs.put(ack_num,1);
+                }
+            }
+            return -1;
+        }
+
+        static boolean isInOrder(StateTable st, MySegment segment){
+            boolean in_order =  segment.seq_number == st.last_ack_value;
+            if(in_order)System.out.println("Recebi segmento em ordem ("+segment.seq_number+")"+ LocalTime.now() );
+            else System.out.println("Recebi segmento fora de ordem (" + segment.seq_number+") em vez de " + st.last_ack_value +" "+ LocalTime.now() );
+            return in_order;
         }
 
         static byte[] calculateChecksum(byte[] data){

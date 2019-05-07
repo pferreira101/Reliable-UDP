@@ -17,18 +17,18 @@ import static TransfereCC.ErrorControl.*;
 
 
 public class SenderSide extends ConnectionHandler implements Runnable {
-    AgenteUDP msgSender;
-    StateTable st;
 
     SenderSide(InetAddress ip, int port_number, String filename, int isn, AgenteUDP msgSender){
         super();
+        this.segmentsToProcess = new TreeSet<>((s1,s2) -> Integer.compare(s1.ack_number, s2.ack_number ));
+
         this.st = new StateTable();
 
         this.st.setDestination(ip,port_number);
         this.st.setFilename(filename);
-        this.st.last_correct_seq = isn;
+        this.st.last_ack_value = isn;
 
-        this.msgSender = msgSender;
+        this.msg_sender = msgSender;
     }
 
     public void run() {
@@ -56,13 +56,13 @@ public class SenderSide extends ConnectionHandler implements Runnable {
         if(!(new File(wanted_file).isFile())){
             System.out.println("Não existe o ficheiro pedido");
 
-            msgSender.sendMissingFileFYN(this.st);
+            msg_sender.sendMissingFileFYN(this.st);
             return false;
         }
 
-        Pair<byte[], byte[]> assinatura = generateSignature(wanted_file, this.msgSender.keys);
+        Pair<byte[], byte[]> assinatura = generateSignature(wanted_file, this.msg_sender.keys);
         this.st.setCrypto(assinatura.first, assinatura.second);
-        msgSender.sendSYNACK(st);
+        msg_sender.sendSYNACK(st);
 
         waitSegment();
         MySegment to_process = getNextSegment();
@@ -79,16 +79,19 @@ public class SenderSide extends ConnectionHandler implements Runnable {
         MySegment received;
 
         //TRANSFERENCIA DE FICHEIRO
-        List<byte[]> bytes_pacotes = dividePacket(this.st.file, 1024);
+        List<byte[]> data_packets = dividePacket(this.st.file, 1024);
 
-        for (byte[] b : bytes_pacotes) {
-            msgSender.sendDataSegment(this.st, b);
+        int i=0;
+        while(i < data_packets.size()){
+            while(i < data_packets.size() && st.unAckedSegments.size() < st.windowSize)
+                msg_sender.sendDataSegment(this.st, data_packets.get(i++));
 
             waitSegment();
             received = getNextSegment();
             if(isACK(received)) {
-                processReceivedAck(received,this.st);
-                System.out.printf("Recebi um ACK (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
+                int re_send = processReceivedAck(received,this.st);
+                if(re_send == -1)System.out.printf("Recebi um ACK (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
+                else System.out.printf("Recebi um ACK repetido (ACK : %d ) - " + LocalTime.now() + "\n", re_send);
             }
         }
 
@@ -98,7 +101,7 @@ public class SenderSide extends ConnectionHandler implements Runnable {
 
 
     private void endConnection() throws InterruptedException {
-        this.msgSender.sendFYN(this.st);
+        this.msg_sender.sendFYN(this.st);
 
         waitSegment();
         MySegment received = getNextSegment();
