@@ -21,9 +21,11 @@ import java.util.*;
 
 import static TransfereCC.ConnectionControl.*;
 import static TransfereCC.ErrorControl.*;
+import static java.lang.Thread.sleep;
 
 
 public class AgenteUDP {
+    int num_Acks_blocked = 0;
     DatagramPacket desordenado;
     Map<AbstractMap.SimpleEntry, ConnectionHandler> connections;
     DatagramSocket serverSocket;
@@ -92,6 +94,18 @@ public class AgenteUDP {
             st.unAckedSegments.add(to_send);
         }
 
+        /* descomentar para meter atraso no envio de ack
+        if(num_Acks_blocked==0)
+            if(isACK(to_send) && to_send.ack_number == 4) {
+                try {
+                    sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                num_Acks_blocked=1;
+                return ;}
+        */
+
         byte[] checksum = calculateChecksum(to_send.toByteArray());
         to_send.setChecksum(checksum);
 
@@ -102,12 +116,12 @@ public class AgenteUDP {
         sendPacket = new DatagramPacket(data, data.length, st.IPAddress, st.port);
 
         // mandar pacotes fora de ordem
-        if(to_send.fileData != null && to_send.seq_number==3) {this.desordenado = sendPacket; return ;}
+        //if(to_send.fileData != null && to_send.seq_number==3) {this.desordenado = sendPacket; return ;}
 
         try {
             serverSocket.send(sendPacket);
             //mandar o pacote travado anteriormente
-            if(to_send.fileData != null && to_send.seq_number==6) serverSocket.send(desordenado);
+            //if(to_send.fileData != null && to_send.seq_number==6) serverSocket.send(desordenado);
         } catch (IOException e) {
             System.out.println("Error sending packet");
         }
