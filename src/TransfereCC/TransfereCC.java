@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class TransfereCC {
 
@@ -22,7 +23,7 @@ public class TransfereCC {
                 String input = buffer.readLine();
                 port = Integer.parseInt(input);
                 if(port < 65536 && port > 0) {
-                    serverSocket = new DatagramSocket(port, InetAddress.getLocalHost());
+                    serverSocket = new DatagramSocket(port);
                 };
                 valid_port = true;
             }
@@ -38,9 +39,12 @@ public class TransfereCC {
         return serverSocket;
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args)  throws Exception{
         System.out.println("--- Welcome to TransfereCC ---");
-        System.out.println(InetAddress.getLocalHost().getHostAddress());
+        try {
+            System.out.println(InetAddress.getLocalHost().getHostAddress());
+        } catch (UnknownHostException e) {
+        }
 
         BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
         DatagramSocket socket = beginSocket(buffer);

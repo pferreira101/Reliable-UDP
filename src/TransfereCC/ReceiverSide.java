@@ -104,6 +104,8 @@ class ReceiverSide extends ConnectionHandler {
         // Verifica se o ficheiro é o mesmo
         boolean check_file = Crypto.verifySignature("downloads/"+this.st.file, this.st.assinatura, this.st.public_key);
         System.out.println("VERIFICA FICHEIRO C/ ASSINATURA DIGITAL = " + check_file);
+
+        this.msg_sender.removeConnection(this.st.IPAddress,this.st.port);
     }
 
 

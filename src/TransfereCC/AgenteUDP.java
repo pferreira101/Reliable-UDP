@@ -21,7 +21,6 @@ import java.util.*;
 
 import static TransfereCC.ConnectionControl.*;
 import static TransfereCC.ErrorControl.*;
-import static java.lang.Thread.sleep;
 
 
 public class AgenteUDP {
@@ -68,6 +67,10 @@ public class AgenteUDP {
 
         Thread t_sender = new Thread(sender);
         t_sender.start();
+    }
+
+    void removeConnection(InetAddress ip, int port){
+        this.connections.remove(new AbstractMap.SimpleEntry(ip,port));
     }
 
     /**************************************

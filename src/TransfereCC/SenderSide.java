@@ -147,6 +147,7 @@ public class SenderSide extends ConnectionHandler implements Runnable {
         }
         System.out.println("A terminar - " + LocalTime.now());
         this.timer.cancelTimer();
+        this.msg_sender.removeConnection(this.st.IPAddress,this.st.port);
     }
 }
 
