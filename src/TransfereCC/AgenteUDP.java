@@ -102,12 +102,12 @@ public class AgenteUDP {
         sendPacket = new DatagramPacket(data, data.length, st.IPAddress, st.port);
 
         // mandar pacotes fora de ordem
-        if(to_send.fileData != null && to_send.seq_number==5) {this.desordenado = sendPacket; return ;}
+        if(to_send.fileData != null && to_send.seq_number==3) {this.desordenado = sendPacket; return ;}
 
         try {
             serverSocket.send(sendPacket);
             //mandar o pacote travado anteriormente
-            //if(to_send.fileData != null && to_send.seq_number==6) serverSocket.send(desordenado);
+            if(to_send.fileData != null && to_send.seq_number==6) serverSocket.send(desordenado);
         } catch (IOException e) {
             System.out.println("Error sending packet");
         }
@@ -135,6 +135,15 @@ public class AgenteUDP {
         buildACK(to_send);
         setAckNumber(st,to_send);
         /* Debug */ System.out.printf("A enviar ack (ACK = %d)- "+ LocalTime.now()+"\n", to_send.ack_number);
+        sendSegment(to_send, st);
+    }
+
+    void sendSpecificACK(StateTable st, int ack_num) {
+        MySegment to_send = new MySegment();
+
+        buildACK(to_send);
+        to_send.ack_number = ack_num;
+        /* Debug */ System.out.printf("A enviar ack especifico (ACK = %d)- "+ LocalTime.now()+"\n", to_send.ack_number);
         sendSegment(to_send, st);
     }
 

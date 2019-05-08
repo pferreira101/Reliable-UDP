@@ -112,6 +112,7 @@ public class SenderSide extends ConnectionHandler implements Runnable {
 
     private void reSend(int re_send) {
         MySegment to_send = this.st.unAckedSegments.first();
+        System.out.printf("A reenviar (SEQ : %d ) - " + LocalTime.now() + "\n", to_send.seq_number);
         this.msg_sender.directSend(to_send, this.st);
     }
 

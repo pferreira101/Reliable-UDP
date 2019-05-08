@@ -37,8 +37,14 @@ class ConnectionHandler implements Runnable{
             return false;
         }
         System.out.println("Chechsum correto (SEQ:"+received.seq_number+" || ACK: "+received.ack_number+") - "+ LocalTime.now());
+
+        if(!isACK(received) && received.seq_number < this.st.last_ack_value) {
+            msg_sender.sendSpecificACK(this.st, received.seq_number + 1);
+            return false;
+        }
+
         l.lock();
-        // error free segments will be buffered
+        // error free segments not yet processed will be buffered
         this.segmentsToProcess.add(received);
         l.unlock();
 
