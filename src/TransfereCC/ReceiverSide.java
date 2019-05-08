@@ -68,9 +68,20 @@ class ReceiverSide extends ConnectionHandler {
         int count=0;
         while(true) {
             waitSegment();
+            this.l.lock();
             // only wakes up when in order, error free, segment was received
+            // there is still need to check for gaps between segments in queue
             while(this.segmentsToProcess.size() > 0) {
-                received = getNextSegment();
+                if (isInOrder(st, this.segmentsToProcess.first())){
+                    received = getNextSegment();
+                    System.out.println("A processar um pacote  (SEQ:" + received.seq_number + ") - " + LocalTime.now());
+                }
+                else {
+                    System.out.println("Pedir reenvio do pacote em falta" + LocalTime.now());
+                    this.readyToProcess = false;
+                    msg_sender.requestRepeat(this.st, this.st.last_ack_value);
+                    break;
+                }
 
                 if (isFYN(received)) {
                     System.out.println("Recebi FYN - " + LocalTime.now());
@@ -83,6 +94,7 @@ class ReceiverSide extends ConnectionHandler {
                 bos.write(received.fileData, 0, received.fileData.length);
 
             }
+            this.l.unlock();
             if(isFYN(received))break;
         }
 
