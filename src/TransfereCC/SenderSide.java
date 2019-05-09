@@ -83,6 +83,7 @@ public class SenderSide extends ConnectionHandler implements Runnable {
             }
 
             msg_sender.sendSYNACK(st);
+            initTimer();
 
             waitSegment();
             MySegment to_process = getNextSegment();
@@ -95,6 +96,7 @@ public class SenderSide extends ConnectionHandler implements Runnable {
         }
         else {// foi feito um pedido de put, é preciso iniciar conexão
             msg_sender.sendSYNWithFilename(st);
+            initTimer();
 
             waitSegment();
             received = getNextSegment();
@@ -110,6 +112,7 @@ public class SenderSide extends ConnectionHandler implements Runnable {
                 System.out.println("Recebi ack ao pedido de conexao PUT - " + LocalTime.now());
 
                 msg_sender.sendSYNACK(st);
+                resetTimer();
 
                 waitSegment();
                 received = getNextSegment();

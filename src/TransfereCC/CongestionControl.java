@@ -1,8 +1,5 @@
 package TransfereCC;
 
-import java.awt.desktop.SystemSleepEvent;
-
-import static java.lang.Math.floor;
 
 public class CongestionControl {
 
@@ -48,7 +45,7 @@ public class CongestionControl {
 
             case CA:
                 ++st.windowSizeCAaux;
-                if(st.windowSizeCAaux == st.windowSize){
+                if(st.windowSizeCAaux >= st.windowSize){
                     ++st.windowSize;
                     st.windowSizeCAaux = 0;
                 }
