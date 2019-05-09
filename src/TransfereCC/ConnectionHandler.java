@@ -80,8 +80,6 @@ class ConnectionHandler implements Runnable{
 
 
 
-
-
     MySegment getNextSegment(){
         MySegment to_return =  this.segmentsToProcess.pollFirst();
         return to_return;

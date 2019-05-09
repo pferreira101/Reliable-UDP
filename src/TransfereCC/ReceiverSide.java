@@ -49,7 +49,7 @@ class ReceiverSide extends ConnectionHandler {
     }
 
     boolean establishConnection(){
-        MySegment received;
+        MySegment received = null;
 
         if(this.st.opMode == 0) {
             //INICIO DE CONEXAO
@@ -67,9 +67,6 @@ class ReceiverSide extends ConnectionHandler {
                 return false;
             }
 
-            // Espera resposta SYN
-            waitSegment();
-            received = getNextSegment();
 
             // Verifica se a file existe
             if (isRejectedConnectionFYN(received)) {

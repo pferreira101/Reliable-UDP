@@ -42,6 +42,7 @@ public class SocketListener implements Runnable  {
                 System.out.println("Error ocurred during receive method");
             }
             catch(Exception e){
+                e.printStackTrace();
                 System.out.println("Can't convert UDP content to MySegment");
             }
         }

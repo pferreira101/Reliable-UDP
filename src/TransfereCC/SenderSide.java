@@ -37,14 +37,14 @@ public class SenderSide extends ConnectionHandler implements Runnable {
         if(first_segment == null) {
             this.st.opMode = 1;
             this.st.setFilename(filename);
+            Pair<byte[], byte[]> assinatura = generateSignature(this.st.file, this.msg_sender.keys);
+            this.st.setCrypto(assinatura.first, assinatura.second);
         }
         else if (filename == null) {
             this.st.opMode = 0;
             this.st.setFilename(extractFileName(first_segment));
         }
 
-        Pair<byte[], byte[]> assinatura = generateSignature(this.st.file, this.msg_sender.keys);
-        this.st.setCrypto(assinatura.first, assinatura.second);
     }
 
     public void run() {
@@ -81,6 +81,10 @@ public class SenderSide extends ConnectionHandler implements Runnable {
 
                 msg_sender.sendRejectedConnectionFYN(this.st);
                 return false;
+            }
+            else{
+                Pair<byte[], byte[]> assinatura = generateSignature(this.st.file, this.msg_sender.keys);
+                this.st.setCrypto(assinatura.first, assinatura.second);
             }
 
             msg_sender.sendSYNACK(st);
@@ -121,7 +125,7 @@ public class SenderSide extends ConnectionHandler implements Runnable {
                 System.out.println("Recebi ack ao pedido de conexao PUT - " + LocalTime.now());
 
                 msg_sender.sendSYNACK(st);
-                resetTimer();
+                initTimer();
 
                 waitSegment();
                 received = getNextSegment();
@@ -203,13 +207,17 @@ public class SenderSide extends ConnectionHandler implements Runnable {
     }
 
     void initTimer(){
+        l.lock();
         this.timer = new TimeoutManager(this, 1000);
         this.isTimerRunning = true;
+        l.unlock();
     }
 
     void resetTimer(){
-        this.timer.cancelTimer();
+        l.lock();
+        if(this.timer != null) this.timer.cancelTimer();
         initTimer();
+        l.unlock();
     }
 
     private void endConnection() throws InterruptedException {

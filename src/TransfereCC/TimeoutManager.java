@@ -26,6 +26,7 @@ public class TimeoutManager {
             connection.l.lock();
             connection.reSend(0);
             recalculateWindowSize(connection.st, TIMEOUT);
+            connection.resetTimer();
             connection.l.unlock();
             timer.cancel(); //Terminate the timer thread
         }
