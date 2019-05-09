@@ -4,6 +4,8 @@ import java.time.LocalTime;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static TransfereCC.CongestionControl.*;
+
 public class TimeoutManager {
     SenderSide connection;
     Timer timer;
@@ -23,6 +25,7 @@ public class TimeoutManager {
             System.out.println("TIMEOUT - Voltar a enviar pacote -" + LocalTime.now());
             connection.l.lock();
             connection.reSend(0);
+            recalculateWindowSize(connection.st, TIMEOUT);
             connection.l.unlock();
             timer.cancel(); //Terminate the timer thread
         }

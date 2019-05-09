@@ -38,11 +38,11 @@ public class SocketListener implements Runnable  {
 
                 setPacketAtConnection(new SimpleEntry<InetAddress,Integer>(ip,port), to_process);
             }
-            catch(IOException e){
-                System.out.println("Error ocurred during receive method");
-            }
             catch(ClassNotFoundException e){
                 System.out.println("Can't convert UDP content to MySegment");
+            }
+            catch(IOException e){
+                System.out.println("Error ocurred during receive method");
             }
         }
     }
@@ -56,9 +56,10 @@ public class SocketListener implements Runnable  {
             deferLockAttempt(connection);
         }
         else //if no connection matches key, new request was made
-            if(isFileRequest(to_process))
-                connectionManager.addSenderRoleConnection((InetAddress)key.getKey(), (Integer)key.getValue(),to_process);
-
+            if(isFileGetRequest(to_process))
+                connectionManager.addSenderRoleConnection((InetAddress)key.getKey(), (Integer)key.getValue(),to_process, null);
+            else if (isFilePutRequest(to_process))
+                connectionManager.addReceiverRoleConnection((InetAddress)key.getKey(), (Integer)key.getValue(),to_process, null);
     }
 
     private void deferLockAttempt(ConnectionHandler connection) {

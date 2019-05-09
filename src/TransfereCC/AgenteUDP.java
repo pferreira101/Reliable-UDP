@@ -53,24 +53,24 @@ public class AgenteUDP {
      * Methods for adding new connections *
      *************************************/
 
-    void addReceiverRoleConnection(InetAddress ip, int port, String filename){
-        ConnectionHandler receiver = new ReceiverSide(ip, port, filename, this);
+    void addReceiverRoleConnection(InetAddress ip, int port, MySegment first_segment, String filename){
+        ConnectionHandler receiver = new ReceiverSide(ip, port, first_segment,filename, this);
         this.connections.put(new AbstractMap.SimpleEntry(ip,port),receiver);
 
         Thread t_receiver = new Thread(receiver);
         t_receiver.start();
     }
 
-    void addSenderRoleConnection(InetAddress ip, int port, MySegment first_packet){
-        ConnectionHandler sender = new SenderSide(ip, port, new String(first_packet.fileData), first_packet.seq_number,this);
+    void addSenderRoleConnection(InetAddress ip, int port, MySegment first_segment, String filename){
+        ConnectionHandler sender = new SenderSide(ip, port, first_segment, filename,this);
         this.connections.put(new AbstractMap.SimpleEntry(ip,port),sender);
 
         Thread t_sender = new Thread(sender);
         t_sender.start();
     }
 
-    void removeConnection(InetAddress ip, int port){
-        this.connections.remove(new AbstractMap.SimpleEntry(ip,port));
+    void removeConnection(StateTable st){
+        this.connections.remove(new AbstractMap.SimpleEntry(st.IPAddress,st.port));
     }
 
     /**************************************
@@ -138,11 +138,11 @@ public class AgenteUDP {
         sendSegment(to_send, st);
     }
 
-    void sendMissingFileFYN(StateTable st) {
+    void sendRejectedConnectionFYN(StateTable st) {
         MySegment to_send = new MySegment();
 
-        buildErrorFileFYN(to_send);
-        /* Debug */ System.out.printf("A enviar missingfilefyn (SEQ : %d) - "+ LocalTime.now()+"\n",st.curr_seq_num);
+        buildRejectedConnectionFYN(to_send);
+        /* Debug */ System.out.printf("A enviar rejected connection fyn (SEQ : %d) - "+ LocalTime.now()+"\n",st.curr_seq_num);
         sendSegment(to_send, st);
     }
 
@@ -186,7 +186,7 @@ public class AgenteUDP {
     void sendSYNWithFilename(StateTable st) {
         MySegment to_send = new MySegment();
 
-        buildSYNWithFileName(to_send, st.file);
+        buildSYN(to_send, st.file, st.opMode);
         /* Debug */ System.out.printf("A enviar synwithfilename (SEQ : %d) - "+ LocalTime.now()+"\n",st.curr_seq_num);
         sendSegment(to_send, st);
     }

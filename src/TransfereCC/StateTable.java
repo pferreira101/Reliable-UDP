@@ -5,13 +5,15 @@ import java.util.*;
 
 class StateTable {
     public int congestion_state;
-    int windowSize;
+    float windowSize;
+    int windowSizeCAaux;
     int threshold;
     int curr_seq_num;
     int last_ack_value;
     InetAddress IPAddress;
     int port;
     String file;
+    int opMode; // 0 - get, 1 - put
     int connection_state; // 0 sem conexão -- 1 em inicio de conexao -- 2 em transferencia -- 3 em termino de conexao
     TreeSet<MySegment> unAckedSegments;
     Map<Integer,Integer> dupACKs;

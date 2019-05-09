@@ -63,7 +63,24 @@ public class TransfereCC {
                             System.out.println(InetAddress.getByName(inputs[1]).toString());
                             System.out.println("Válido");
 
-                            connectionManager.addReceiverRoleConnection(InetAddress.getByName(inputs[1]),Integer.parseInt(inputs[3]),inputs[2]);
+                            connectionManager.addReceiverRoleConnection(InetAddress.getByName(inputs[1]),Integer.parseInt(inputs[3]),null ,inputs[2]);
+                        }
+                        catch (IOException e){
+                            System.out.println("Inválido");
+                        }
+                    }
+                    else{
+                        System.out.println("Faltam argumentos");
+                    }
+                    break;
+
+                case "put":
+                    if(inputs.length == 4){
+                        try {
+                            System.out.println(InetAddress.getByName(inputs[1]).toString());
+                            System.out.println("Válido");
+
+                            connectionManager.addSenderRoleConnection(InetAddress.getByName(inputs[1]),Integer.parseInt(inputs[3]),null, inputs[2]);
                         }
                         catch (IOException e){
                             System.out.println("Inválido");

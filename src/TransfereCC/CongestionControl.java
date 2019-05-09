@@ -1,8 +1,10 @@
 package TransfereCC;
 
-public class CongestionControl {
+import java.awt.desktop.SystemSleepEvent;
 
-    static final int MSS = 1500;
+import static java.lang.Math.floor;
+
+public class CongestionControl {
 
     // eventos
     static final int NEWACK = 0;
@@ -15,128 +17,92 @@ public class CongestionControl {
     static final int CA = 5;
     static final int FR = 6;
 
-/*
-    private int cong_window;
-    private int round;
+    static void recalculateWindowSize(StateTable st, int type){
+        switch(st.congestion_state) {
+            case SS:
+                processSSState(st, type);
+                break;
 
-    // semelhante a TCP Reno
+            case CA:
+                processCAState(st, type);
+                break;
 
-    public CongestionControl(){
-        this.cong_window = MSS;
-        this.round = 0;
-    }
+            case FR:
+                processFRState(st, type);
+                break;
 
-    public void updateSent(int size){
-        this.lst_byte_sent += size;
-    }
-
-    public void updateAcked(int size){
-        this.lst_byte_acked += size;
-    }
-
-    public void increaseWindow() {
-
-        round++;
-        // slow start
-        if (cong_window < threshold) {
-            cong_window += MSS;
         }
 
-        // congestion avoidance
-        else if (cong_window >= threshold)
-            cong_window = cong_window + MSS * (MSS / cong_window);
+        System.out.println("Novo tamanho da janela = " + st.windowSize + "( estado: " +st.congestion_state+" step: "+ st.windowSizeCAaux +")");
     }
 
-    // type 0: se houver timeout, type 1: se houver 3 duplicados
-    public void decreaseWindow(int type) {
-        round++;
-        switch(type) {
+    static private void increaseWindowSize(StateTable st){
+        switch(st.congestion_state) {
+            case SS:
+                if (st.windowSize < st.threshold) st.windowSize++;
+                else {
+                    st.congestion_state = CA;
+                    ++st.windowSizeCAaux;
+                }
+                break;
 
-            // timeout
-            case 0: threshold = cong_window/2;
-            cong_window = MSS;
-            break;
-
-            // fast recovery
-            case 1: threshold = cong_window/2;
-            cong_window = threshold;
-            break;
-        }
-    }
-*/
-
-    public void updateAcked(StateTable st){
-        st.last_ack_value++;
-    }
-
-    public void increaseWindow(StateTable st){
-        if (st.windowSize < st.threshold) st.windowSize++;
-
-        // congestion avoidance
-        else {
-            st.congestion_state = CA;
-            st.windowSize = st.windowSize + (1 / st.windowSize);
+            case CA:
+                ++st.windowSizeCAaux;
+                if(st.windowSizeCAaux == st.windowSize){
+                    ++st.windowSize;
+                    st.windowSizeCAaux = 0;
+                }
+                break;
         }
     }
 
-    public void increaseCongestedWindow(StateTable st){
-            st.windowSize = st.windowSize + (1 / st.windowSize);
-    }
 
-    public void resetACKDup(int ack_number , StateTable st){
-
-    }
-
-    public void increaseACKDup(int ack_number , StateTable st){
-
-    }
-
-    private void processSSState(int ack_number , StateTable st, int type){
+    static private void processSSState(StateTable st, int type){
         switch(type) {
             case NEWACK:
-                increaseWindow(st);
-                updateAcked(st);
+                increaseWindowSize(st);
                 break;
 
             case TIMEOUT:
-                st.threshold = st.windowSize/2;
+                st.threshold = (int) st.windowSize/2;
                 st.windowSize = 1;
                 break;
 
-            case ACKDUP:
-                increaseACKDup(ack_number, st);
+            case ACK3DUP:
+                st.threshold = (int) st.windowSize/2;
+                st.windowSize = st.threshold+3;
+                st.congestion_state = FR;
                 break;
+
         }
     }
 
-    private void processCAState(int ack_number , StateTable st, int type){
+    static private void processCAState(StateTable st, int type){
         switch (type){
             case NEWACK:
-                increaseCongestedWindow(st);
-                break;
-
-            case ACKDUP:
-                increaseACKDup(ack_number, st);
+                increaseWindowSize(st);
                 break;
 
             case TIMEOUT:
-                st.threshold = st.windowSize/2;
+                st.threshold = (int) st.windowSize/2;
                 st.windowSize = 1;
+                st.windowSizeCAaux = 0;
                 st.congestion_state = SS;
                 break;
 
             case ACK3DUP:
-                st.threshold = st.windowSize/2;
+                st.threshold = (int) st.windowSize/2;
                 st.windowSize = st.threshold+3;
+                st.windowSizeCAaux = 0;
+                st.congestion_state = FR;
                 break;
         }
     }
 
-    public void processFRState(int ack_number , StateTable st, int type){
+    static private void processFRState(StateTable st, int type){
         switch (type){
             case NEWACK:
                 st.windowSize = st.threshold;
-                resetACKDup(ack_number, st);
                 st.congestion_state = CA;
                 break;
 
@@ -145,30 +111,10 @@ public class CongestionControl {
                 break;
 
             case TIMEOUT:
-                st.threshold = st.windowSize/2;
+                st.threshold = (int) st.windowSize/2;
                 st.windowSize = 1;
-                resetACKDup(ack_number, st);
                 st.congestion_state = SS;
                 break;
         }
     }
-
-    // retornar algum tipo de ação a fazer? "transmit new segment as allowed"
-    // calcular o tipo antes da chamada da função ou então calcular dentro da funçao?
-    public void processReceivedACK(int ack_number /*em vez do segmento completo?? */, StateTable st, int type){
-        switch (st.congestion_state){
-            case SS:
-                processSSState(ack_number, st, type);
-                break;
-
-            case CA:
-                processCAState(ack_number, st, type);
-                break;
-
-            case FR:
-                processFRState(ack_number, st, type);
-                break;
-        }
-    }
-
 }
