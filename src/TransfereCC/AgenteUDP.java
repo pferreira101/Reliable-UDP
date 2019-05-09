@@ -43,10 +43,7 @@ public class AgenteUDP {
 
         try{
             keys = Crypto.generateKeys();
-            buffer_max_size = serverSocket.getReceiveBufferSize() / 1500; // tamanho do pacote + margem
-        }
-        catch (SocketException e1){
-
+            buffer_max_size = 65000 / 1500; // tamanho do pacote + margem
         }
         catch (Exception e2){
             System.out.println("Ocorreu um erro na geração da chave: ");

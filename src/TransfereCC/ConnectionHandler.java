@@ -8,6 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static TransfereCC.ConnectionControl.*;
 import static TransfereCC.ErrorControl.*;
+import static java.lang.Thread.sleep;
 
 class ConnectionHandler implements Runnable{
     TreeSet<MySegment> segmentsToProcess;
@@ -67,6 +68,14 @@ class ConnectionHandler implements Runnable{
             }
         }
         l.unlock();
+    }
+
+    void waitResponse(){
+        try {
+            sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 

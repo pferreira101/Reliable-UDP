@@ -7,7 +7,6 @@ class StateTable {
     public int congestion_state;
     float windowSize;
     int flow_windowsize;
-
     int windowSizeCAaux;
     int threshold;
     int curr_seq_num;
@@ -26,6 +25,7 @@ class StateTable {
         connection_state=0;
         curr_seq_num=0;
         windowSize = 4; // começa a 1?
+        flow_windowsize = 1;
         unAckedSegments = new TreeSet<>((s1,s2) -> Integer.compare(s1.seq_number, s2.seq_number) ); // ordenar por seq number
         dupACKs = new HashMap<>();
         threshold = 1; // mudar
