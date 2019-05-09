@@ -8,6 +8,9 @@ import java.io.InputStreamReader;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TransfereCC {
 
@@ -67,6 +70,17 @@ public class TransfereCC {
                         }
                         catch (IOException e){
                             System.out.println("Inválido");
+                        }
+                    }
+                    else if (inputs.length > 4 && inputs.length%2==0){
+                        int total_senders = (inputs.length-2)/2;
+                        for (int i = 0; i<total_senders; i++){
+                            InetAddress ip = InetAddress.getByName(inputs[i*2+1]);
+                            int port = Integer.parseInt(inputs[i*2+2]);
+
+                            System.err.println("Conexão " + i + ": IP = " + ip.toString() + "; Porta = " + port);
+                            /* ..... */
+
                         }
                     }
                     else{
