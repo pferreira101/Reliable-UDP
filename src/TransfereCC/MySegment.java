@@ -5,6 +5,7 @@ import java.io.*;
 class MySegment implements Serializable {
     int seq_number;
     int ack_number;
+    int max_window_size;
     byte flag;
     byte[] checksum;
     byte[] fileData;
@@ -46,6 +47,10 @@ class MySegment implements Serializable {
 
     public byte[] getChecksum() {
         return this.checksum;
+    }
+
+    public void setMaxWindowSize(int max_window_size) {
+        this.max_window_size = max_window_size;
     }
 }
 

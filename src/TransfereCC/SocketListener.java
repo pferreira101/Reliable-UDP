@@ -38,11 +38,11 @@ public class SocketListener implements Runnable  {
 
                 setPacketAtConnection(new SimpleEntry<InetAddress,Integer>(ip,port), to_process);
             }
-            catch(ClassNotFoundException e){
-                System.out.println("Can't convert UDP content to MySegment");
-            }
             catch(IOException e){
                 System.out.println("Error ocurred during receive method");
+            }
+            catch(Exception e){
+                System.out.println("Can't convert UDP content to MySegment");
             }
         }
     }

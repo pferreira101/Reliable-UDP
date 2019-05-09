@@ -32,6 +32,8 @@ public class AgenteUDP {
 
     KeyPair keys;
 
+    int buffer_max_size;
+
     AgenteUDP(DatagramSocket serverSocket) {
 
         connections = new HashMap<>();
@@ -41,10 +43,14 @@ public class AgenteUDP {
 
         try{
             keys = Crypto.generateKeys();
+            buffer_max_size = serverSocket.getReceiveBufferSize() / 1500; // tamanho do pacote + margem
         }
-        catch (Exception e){
+        catch (SocketException e1){
+
+        }
+        catch (Exception e2){
             System.out.println("Ocorreu um erro na geração da chave: ");
-            e.printStackTrace();
+            e2.printStackTrace();
         }
 
     }
@@ -150,13 +156,19 @@ public class AgenteUDP {
         MySegment to_send = new MySegment();
 
         buildACK(to_send);
-        setAckNumber(st,to_send);
+        setAckNumber(st, to_send);
+
+        int max_window_size = this.buffer_max_size / this.connections.size();
+        to_send.setMaxWindowSize(max_window_size);
+
         /* Debug */ System.out.printf("A enviar ack (ACK = %d)- "+ LocalTime.now()+"\n", to_send.ack_number);
         sendSegment(to_send, st);
     }
 
     void sendSpecificACK(StateTable st, int ack_num) {
         MySegment to_send = new MySegment();
+
+
 
         buildACK(to_send);
         to_send.ack_number = ack_num;

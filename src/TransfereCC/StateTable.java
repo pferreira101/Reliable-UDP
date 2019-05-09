@@ -6,6 +6,8 @@ import java.util.*;
 class StateTable {
     public int congestion_state;
     float windowSize;
+    int flow_windowsize;
+
     int windowSizeCAaux;
     int threshold;
     int curr_seq_num;

@@ -15,6 +15,7 @@ import static TransfereCC.ConnectionControl.*;
 import static TransfereCC.Crypto.*;
 import static TransfereCC.ErrorControl.*;
 import static TransfereCC.CongestionControl.*;
+import static TransfereCC.FlowControl.adjustFlowControlWindow;
 
 
 public class SenderSide extends ConnectionHandler implements Runnable {
@@ -131,7 +132,9 @@ public class SenderSide extends ConnectionHandler implements Runnable {
 
         int i=0;
         while(i < data_packets.size()){
-            while(i < data_packets.size() && st.unAckedSegments.size() < st.windowSize) {
+            int max_unacked_segs = (int) Math.min(st.windowSize, st.flow_windowsize);
+
+            while(i < data_packets.size() && st.unAckedSegments.size() <  max_unacked_segs) {
                 msg_sender.sendDataSegment(st, data_packets.get(i++));
                 if(!isTimerRunning) initTimer();
             }
@@ -140,6 +143,9 @@ public class SenderSide extends ConnectionHandler implements Runnable {
             received = getNextSegment();
             if(isACK(received)) {
                 int re_send = processReceivedAck(received,st);
+
+                adjustFlowControlWindow(received, st);
+
                 if(re_send == -2) {
                     System.out.printf("Recebi um ACK (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
                     resetTimer();
@@ -154,6 +160,8 @@ public class SenderSide extends ConnectionHandler implements Runnable {
                     recalculateWindowSize(st, ACK3DUP);
                     reSend(re_send);
                 }
+
+
             }
         }
 
