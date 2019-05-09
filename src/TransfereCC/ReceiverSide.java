@@ -53,7 +53,19 @@ class ReceiverSide extends ConnectionHandler {
 
         if(this.st.opMode == 0) {
             //INICIO DE CONEXAO
-            msg_sender.sendSYNWithFilename(st);
+            int tries = 0;
+            while(tries < 3) {
+                msg_sender.sendSYNWithFilename(st);
+
+                waitResponse();
+                received = getNextSegment();
+                if(received != null) break;
+                else ++tries;
+            }
+            if(tries == 3){
+                System.out.println("Couldn't establish connection");
+                return false;
+            }
 
             // Espera resposta SYN
             waitSegment();

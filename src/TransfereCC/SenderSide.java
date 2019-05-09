@@ -73,7 +73,7 @@ public class SenderSide extends ConnectionHandler implements Runnable {
 
 
     private boolean establishConnection() {
-        MySegment received;
+        MySegment received = null;
 
         if(this.st.opMode == 0) { // foi feito pedido get (thread criada devido à chegada de syn com pedido)
             if (!(new File(this.st.file).isFile())) {
@@ -96,11 +96,19 @@ public class SenderSide extends ConnectionHandler implements Runnable {
             } else return false;
         }
         else {// foi feito um pedido de put, é preciso iniciar conexão
-            msg_sender.sendSYNWithFilename(st);
-            initTimer();
+            int tries = 0;
+            while(tries < 3) {
+                msg_sender.sendSYNWithFilename(st);
 
-            waitSegment();
-            received = getNextSegment();
+                waitResponse();
+                received = getNextSegment();
+                if(received != null) break;
+                else ++tries;
+            }
+            if(tries == 3){
+                System.out.println("Couldn't establish connection");
+                return false;
+            }
 
             if(isRejectedConnectionFYN(received)) {
                 System.out.println("Já existe o ficheiro que se pretende dar UP");
