@@ -200,6 +200,29 @@ public class SenderSide extends ConnectionHandler implements Runnable {
 
     }
 
+
+    private void endConnection() throws InterruptedException {
+        this.msg_sender.sendFYN(this.st);
+
+        while(st.unAckedSegments.size() != 0) {
+            waitSegment();
+            MySegment received = getNextSegment();
+
+            if (isACK(received)) { // esta parte precisa de ser mudada
+                int re_send = processReceivedAck(received, this.st);
+                if (re_send == -2) {
+                    System.out.printf("Recebi um ACK (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
+                }
+
+            }
+        }
+        System.out.println("A terminar - " + LocalTime.now());
+        l.lock();
+        this.timer.cancelTimer();
+        l.unlock();
+        this.msg_sender.removeConnection(this.st);
+    }
+
     void reSend(int re_send) {
         MySegment to_send = this.st.unAckedSegments.first();
         System.out.printf("A reenviar (SEQ : %d ) - " + LocalTime.now() + "\n", to_send.seq_number);
@@ -218,26 +241,6 @@ public class SenderSide extends ConnectionHandler implements Runnable {
         if(this.timer != null) this.timer.cancelTimer();
         initTimer();
         l.unlock();
-    }
-
-    private void endConnection() throws InterruptedException {
-        this.msg_sender.sendFYN(this.st);
-
-        while(st.unAckedSegments.size() != 0) {
-            waitSegment();
-            MySegment received = getNextSegment();
-
-            if (isACK(received)) { // esta parte precisa de ser mudada
-                int re_send = processReceivedAck(received, this.st);
-                if (re_send == -2) {
-                    System.out.printf("Recebi um ACK (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
-                }
-
-            }
-        }
-        System.out.println("A terminar - " + LocalTime.now());
-        this.timer.cancelTimer();
-        this.msg_sender.removeConnection(this.st);
     }
 }
 
