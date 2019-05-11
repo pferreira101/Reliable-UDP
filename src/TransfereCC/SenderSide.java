@@ -4,10 +4,9 @@ import Common.Pair;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.time.Duration;
 import java.time.LocalTime;
 import java.util.*;
-
-
 
 
 import static TransfereCC.AgenteUDP.*;
@@ -21,6 +20,7 @@ import static TransfereCC.FlowControl.adjustFlowControlWindow;
 public class SenderSide extends ConnectionHandler implements Runnable {
     TimeoutManager timer;
     boolean isTimerRunning;
+    LocalTime begin;
 
     SenderSide(InetAddress ip, int port_number, MySegment first_segment, String filename, AgenteUDP msgSender){
         super();
@@ -49,6 +49,8 @@ public class SenderSide extends ConnectionHandler implements Runnable {
 
     public void run() {
         System.out.println("Playing sender role");
+        begin = LocalTime.now();
+
             try {
                 // INICIO DE CONEXAO - Verifica se existe o ficheiro pedido
                 boolean connection_accepted = establishConnection();
@@ -77,8 +79,6 @@ public class SenderSide extends ConnectionHandler implements Runnable {
 
         if(this.st.opMode == 0) { // foi feito pedido get (thread criada devido à chegada de syn com pedido)
             if (!(new File(this.st.file).isFile())) {
-                System.out.println("Não existe o ficheiro pedido");
-
                 msg_sender.sendRejectedConnectionFYN(this.st);
                 return false;
             }
@@ -95,7 +95,6 @@ public class SenderSide extends ConnectionHandler implements Runnable {
 
             if (isACK(to_process)) {
                 processReceivedAck(to_process, this.st);
-                System.out.println("Recebi um ACK ao SYNACK - " + LocalTime.now());
                 return true;
             } else return false;
         }
@@ -115,14 +114,13 @@ public class SenderSide extends ConnectionHandler implements Runnable {
             }
 
             if(isRejectedConnectionFYN(received)) {
-                System.out.println("Já existe o ficheiro que se pretende dar UP");
+                System.out.println("Connection was rejected");
                 return false;
             }
 
             // Envia ACK
             if (isACK(received)) {
                 processReceivedAck(received, this.st);
-                System.out.println("Recebi ack ao pedido de conexao PUT - " + LocalTime.now());
 
                 msg_sender.sendSYNACK(st);
                 initTimer();
@@ -162,16 +160,13 @@ public class SenderSide extends ConnectionHandler implements Runnable {
                 adjustFlowControlWindow(received, st);
 
                 if(re_send == -2) {
-                    System.out.printf("Recebi um ACK (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
                     resetTimer();
                     recalculateWindowSize(st, NEWACK);
                 }
                 if(re_send == -1) {
-                    System.out.printf("Recebi primeiro ack repetido (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
                     recalculateWindowSize(st, ACKDUP);
                 }
                 if(re_send > 0) {
-                    System.out.printf("Recebi segundo ack repetido (ACK : %d ) - " + LocalTime.now() + "\n", re_send);
                     recalculateWindowSize(st, ACK3DUP);
                     reSend(re_send);
                 }
@@ -180,19 +175,15 @@ public class SenderSide extends ConnectionHandler implements Runnable {
             }
         }
 
-        System.out.println("####### Supostamente todos os pacotes foram enviados. Pacotes:" + data_packets.size()+", enviados:" +i );
         while(st.unAckedSegments.size()>0) {
             waitSegment();
             received = getNextSegment();
             if (isACK(received)) {
                 int re_send = processReceivedAck(received, st);
                 if(re_send == -2) {
-                    System.out.printf("Recebi um ACK (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
                     resetTimer();
-            }
-                if(re_send == -1) System.out.printf("Recebi primeiro ack repetido (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
+                }
                 if(re_send > 0) {
-                    System.out.printf("Recebi segundo ack repetido (ACK : %d ) - " + LocalTime.now() + "\n", re_send);
                     reSend(re_send);
                 }
             }
@@ -208,24 +199,25 @@ public class SenderSide extends ConnectionHandler implements Runnable {
             waitSegment();
             MySegment received = getNextSegment();
 
-            if (isACK(received)) { // esta parte precisa de ser mudada
+            if (isACK(received)) {
                 int re_send = processReceivedAck(received, this.st);
-                if (re_send == -2) {
-                    System.out.printf("Recebi um ACK (ACK : %d ) - " + LocalTime.now() + "\n", received.ack_number);
+                if (re_send > 0) {
+                    reSend(re_send);
                 }
-
             }
         }
-        System.out.println("A terminar - " + LocalTime.now());
         l.lock();
         this.timer.cancelTimer();
         l.unlock();
         this.msg_sender.removeConnection(this.st);
+        LocalTime end =  LocalTime.now();
+        System.out.println("Transfer time: " +  Duration.between(begin, end).toMillis() + " ms");
     }
 
     void reSend(int re_send) {
         MySegment to_send = this.st.unAckedSegments.first();
-        System.out.printf("A reenviar (SEQ : %d ) - " + LocalTime.now() + "\n", to_send.seq_number);
+        if(to_send == null) return ;
+
         this.msg_sender.directSend(to_send, this.st);
     }
 

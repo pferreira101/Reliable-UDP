@@ -33,11 +33,9 @@ class ConnectionHandler implements Runnable{
         // check integrity
         boolean isOk = verificaChecksum(received);
         if(!isOk) {
-            System.out.println("Chechsum errado (SEQ:"+received.seq_number+" || ACK: "+received.ack_number+") - "+ LocalTime.now());
             msg_sender.requestRepeat(this.st,received.seq_number-1);
             return false;
         }
-        System.out.println("Chechsum correto (SEQ:"+received.seq_number+" || ACK: "+received.ack_number+") - "+ LocalTime.now());
 
         if(!isACK(received) && received.seq_number < this.st.last_ack_value) {
             msg_sender.sendSpecificACK(this.st, received.seq_number + 1);

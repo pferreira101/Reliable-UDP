@@ -137,7 +137,6 @@ public class AgenteUDP {
         MySegment to_send = new MySegment();
 
         to_send.setFileData(seg_data);
-        /* Debug */ System.out.printf("A enviar dados (SEQ : %d) - "+ LocalTime.now()+"\n",st.curr_seq_num);
         sendSegment(to_send, st);
     }
 
@@ -145,7 +144,6 @@ public class AgenteUDP {
         MySegment to_send = new MySegment();
 
         buildRejectedConnectionFYN(to_send);
-        /* Debug */ System.out.printf("A enviar rejected connection fyn (SEQ : %d) - "+ LocalTime.now()+"\n",st.curr_seq_num);
         sendSegment(to_send, st);
     }
 
@@ -158,18 +156,15 @@ public class AgenteUDP {
         int max_window_size = this.buffer_max_size / this.connections.size();
         to_send.setMaxWindowSize(max_window_size);
 
-        /* Debug */ System.out.printf("A enviar ack (ACK = %d)- "+ LocalTime.now()+"\n", to_send.ack_number);
         sendSegment(to_send, st);
     }
 
     void sendSpecificACK(StateTable st, int ack_num) {
         MySegment to_send = new MySegment();
 
-
-
         buildACK(to_send);
         to_send.ack_number = ack_num;
-        /* Debug */ System.out.printf("A enviar ack especifico (ACK = %d)- "+ LocalTime.now()+"\n", to_send.ack_number);
+
         sendSegment(to_send, st);
     }
 
@@ -178,7 +173,7 @@ public class AgenteUDP {
         MySegment to_send = new MySegment();
         buildSYNACK(to_send, st.assinatura, st.public_key);
         setAckNumber(st,to_send);
-        /* Debug */ System.out.printf("A enviar synack (SEQ : %d) (ACK = %d)- "+ LocalTime.now()+"\n",st.curr_seq_num, to_send.ack_number);
+
         sendSegment(to_send, st);
     }
 
@@ -187,7 +182,7 @@ public class AgenteUDP {
         MySegment to_send = new MySegment();
 
         buildFYN(to_send);
-        /* Debug */ System.out.printf("A enviar fyn (SEQ : %d) - "+ LocalTime.now()+"\n",st.curr_seq_num);
+
         sendSegment(to_send, st);
     }
 
@@ -196,7 +191,7 @@ public class AgenteUDP {
         MySegment to_send = new MySegment();
 
         buildSYN(to_send, st.file, st.opMode);
-        /* Debug */ System.out.printf("A enviar synwithfilename (SEQ : %d) - "+ LocalTime.now()+"\n",st.curr_seq_num);
+
         sendSegment(to_send, st);
     }
 
@@ -206,7 +201,6 @@ public class AgenteUDP {
         buildACK(to_send);
         to_send.ack_number = ack_value;
 
-        /* Debug */ System.out.printf("A enviar DUPack (ACK = %d)- "+ LocalTime.now()+"\n", to_send.ack_number);
         sendSegment(to_send, st);
         directSend(to_send, st);// para nao voltar a alterar valor do checksum
     }

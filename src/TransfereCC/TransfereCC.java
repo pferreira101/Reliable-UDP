@@ -64,27 +64,15 @@ public class TransfereCC {
                     if(inputs.length == 4){
                         try {
                             System.out.println(InetAddress.getByName(inputs[1]).toString());
-                            System.out.println("Válido");
 
                             connectionManager.addReceiverRoleConnection(InetAddress.getByName(inputs[1]),Integer.parseInt(inputs[3]),null ,inputs[2]);
                         }
                         catch (IOException e){
-                            System.out.println("Inválido");
-                        }
-                    }
-                    else if (inputs.length > 4 && inputs.length%2==0){
-                        int total_senders = (inputs.length-2)/2;
-                        for (int i = 0; i<total_senders; i++){
-                            InetAddress ip = InetAddress.getByName(inputs[i*2+1]);
-                            int port = Integer.parseInt(inputs[i*2+2]);
-
-                            System.err.println("Conexão " + i + ": IP = " + ip.toString() + "; Porta = " + port);
-                            /* ..... */
-
+                            System.out.println("Invalid IP");
                         }
                     }
                     else{
-                        System.out.println("Faltam argumentos");
+                        System.out.println("Missing arguments");
                     }
                     break;
 
@@ -92,16 +80,15 @@ public class TransfereCC {
                     if(inputs.length == 4){
                         try {
                             System.out.println(InetAddress.getByName(inputs[1]).toString());
-                            System.out.println("Válido");
 
                             connectionManager.addSenderRoleConnection(InetAddress.getByName(inputs[1]),Integer.parseInt(inputs[3]),null, inputs[2]);
                         }
                         catch (IOException e){
-                            System.out.println("Inválido");
+                            System.out.println("Invalid IP");
                         }
                     }
                     else{
-                        System.out.println("Faltam argumentos");
+                        System.out.println("Missing arguments");
                     }
                     break;
 
@@ -110,7 +97,7 @@ public class TransfereCC {
                     return;
 
                 default:
-                    System.out.println("Introduza um comando válido");
+                    System.out.println("Insert a valid comand");
                     break;
             }
         }

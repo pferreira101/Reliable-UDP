@@ -10,6 +10,7 @@ class MySegment implements Serializable {
     byte[] checksum;
     byte[] fileData;
 
+
     MySegment(){
         this.checksum = new byte[] {(byte)0,(byte)0};
     }
@@ -28,7 +29,7 @@ class MySegment implements Serializable {
 
     byte[] toByteArray() {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutput out = null;
+        ObjectOutput out;
         try {
             out = new ObjectOutputStream(bos);
             out.writeObject(this);
@@ -45,11 +46,11 @@ class MySegment implements Serializable {
         return (MySegment) in.readObject();
     }
 
-    public byte[] getChecksum() {
+    byte[] getChecksum() {
         return this.checksum;
     }
 
-    public void setMaxWindowSize(int max_window_size) {
+    void setMaxWindowSize(int max_window_size) {
         this.max_window_size = max_window_size;
     }
 }

@@ -30,7 +30,6 @@ public class CongestionControl {
 
         }
 
-        System.out.println("Novo tamanho da janela = " + st.windowSize + "( estado: " +st.congestion_state+" step: "+ st.windowSizeCAaux +")");
     }
 
     static private void increaseWindowSize(StateTable st){

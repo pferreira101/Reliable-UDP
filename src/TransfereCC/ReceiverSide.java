@@ -2,6 +2,7 @@ package TransfereCC;
 
 import java.io.*;
 import java.net.*;
+import java.time.Duration;
 import java.time.LocalTime;
 import java.util.*;
 
@@ -9,6 +10,7 @@ import static TransfereCC.ConnectionControl.*;
 import static TransfereCC.ErrorControl.*;
 
 class ReceiverSide extends ConnectionHandler {
+     LocalTime begin;
 
 
 
@@ -32,6 +34,7 @@ class ReceiverSide extends ConnectionHandler {
 
     public void run()  {
         System.out.println("Playing receiver role");
+        begin =  LocalTime.now();
 
         boolean connection_accepted =  establishConnection();
 
@@ -67,6 +70,9 @@ class ReceiverSide extends ConnectionHandler {
                 return false;
             }
 
+            if(tries > 0){
+                st.unAckedSegments.clear();
+            }
 
             // Verifica se a file existe
             if (isRejectedConnectionFYN(received)) {
@@ -77,8 +83,6 @@ class ReceiverSide extends ConnectionHandler {
             // Envia ACK
             if (isSYNACK(received)) {
                 processReceivedSYNAck(received, this.st);
-                System.out.println("Recebi synack ao pedido de conexao - " + LocalTime.now());
-
                 msg_sender.sendACK(st);
                 return true;
             }
@@ -86,8 +90,6 @@ class ReceiverSide extends ConnectionHandler {
         else if(this.st.opMode == 1){
 
             if ((new File(this.st.file).isFile())) {
-                System.out.println("Já existe o ficheiro que se pretende dar UP");
-
                 //msg_sender.sendRejectedConnectionFYN(this.st);
                 //return false;
             }
@@ -101,8 +103,6 @@ class ReceiverSide extends ConnectionHandler {
 
             if(isSYNACK(received)) {
                 processReceivedSYNAck(received, this.st);
-                System.out.println("Recebi synack do put - " + LocalTime.now());
-
                 msg_sender.sendACK(st);
                 return true;
             }
@@ -129,23 +129,19 @@ class ReceiverSide extends ConnectionHandler {
             while(this.segmentsToProcess.size() > 0) {
                 if (isInOrder(st, this.segmentsToProcess.first())){
                     received = getNextSegment();
-                    System.out.println("A processar um pacote  (SEQ:" + received.seq_number + ") - " + LocalTime.now());
                 }
                 else {
-                    System.out.println("Pedir reenvio do pacote em falta" + LocalTime.now());
                     this.readyToProcess = false;
                     msg_sender.requestRepeat(this.st, this.st.last_ack_value);
                     break;
                 }
 
                 if (isFYN(received)) {
-                    System.out.println("Recebi FYN - " + LocalTime.now());
                     msg_sender.sendACK(st);
                     break;
                 }
                 msg_sender.sendACK(st);
 
-                //System.out.printf("Recebi o %d fragmento - (seq : %d) " + LocalTime.now() + "\n", ++count, received.seq_number);
                 bos.write(received.fileData, 0, received.fileData.length);
 
             }
@@ -158,9 +154,11 @@ class ReceiverSide extends ConnectionHandler {
 
         // Verifica se o ficheiro é o mesmo
         boolean check_file = Crypto.verifySignature("downloads/"+this.st.file, this.st.assinatura, this.st.public_key);
-        System.out.println("VERIFICA FICHEIRO C/ ASSINATURA DIGITAL = " + check_file);
+        if(check_file == true ) System.out.println("Received file is correct and safe.");
 
         this.msg_sender.removeConnection(this.st);
+        LocalTime end =  LocalTime.now();
+        System.out.println("Transfer time: " +  Duration.between(begin, end).toMillis() + " ms");
     }
 
 }

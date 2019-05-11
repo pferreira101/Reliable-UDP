@@ -58,7 +58,6 @@ class ConnectionControl {
     static String extractFileName(MySegment syn_segment){
         String content = new String(syn_segment.fileData);
         String to_return =  content.substring(1);
-        System.out.println("FILENAME: "+to_return );
         return  to_return;
     }
 

@@ -24,11 +24,9 @@ class ErrorControl {
             int ack_num = segment.ack_number;
 
             if(ack_num > send_base) {
-                System.out.println("Comparacao feita : ACK : " + ack_num + " Send Base : " + send_base);
                 // tree set ordenado por ordem crescente de seq num -> eliminar segmentos com seq num menor que o do ack (cumulative ack)
                 while (st.unAckedSegments.size() != 0 && st.unAckedSegments.first().seq_number < ack_num) {
                     MySegment confirmed = st.unAckedSegments.pollFirst(); // elimina o primeiro
-                    System.out.println("Rececao de segmento confirmada (SEQ: "+confirmed.seq_number+") - "+ LocalTime.now() );
                 }
                 return -2;
             }
@@ -44,8 +42,6 @@ class ErrorControl {
 
         static boolean isInOrder(StateTable st, MySegment segment){
             boolean in_order =  segment.seq_number == st.last_ack_value;
-            if(in_order)System.out.println("Recebi segmento em ordem ("+segment.seq_number+")"+ LocalTime.now() );
-            else System.out.println("Recebi segmento fora de ordem (" + segment.seq_number+") em vez de " + st.last_ack_value +" "+ LocalTime.now() );
             return in_order;
         }
 
